@@ -1,0 +1,59 @@
+// frontend/src/store/userStore.js
+
+import { ref } from 'vue'
+import { supabase } from '@/supabaseClient'
+
+// La variable 'user' contient les informations du profil public de l'utilisateur.
+// Elle est initialisée à null.
+export const user = ref(null)
+
+// La variable 'session' contient les informations de la session d'authentification.
+export const session = ref(null)
+
+/**
+ * Met à jour les informations du profil de l'utilisateur.
+ * C'est une requête à votre propre backend pour obtenir les données de la table 'profiles'.
+ */
+const fetchUserProfile = async (userId) => {
+  const token = session.value?.access_token
+  if (!token) return
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (!response.ok) throw new Error("Could not fetch user profile.")
+    const profile = await response.json()
+    user.value = profile
+  } catch (error) {
+    console.error("Error fetching profile:", error)
+    user.value = null // En cas d'erreur, on réinitialise.
+  }
+}
+
+/**
+ * Gère les changements d'état d'authentification de Supabase.
+ */
+supabase.auth.onAuthStateChange(async (_event, newSession) => {
+  session.value = newSession
+
+  if (newSession) {
+    // Si une nouvelle session est active (connexion, rafraîchissement),
+    // on récupère le profil utilisateur associé.
+    await fetchUserProfile(newSession.user.id)
+  } else {
+    // Si la session est nulle (déconnexion), on vide les informations utilisateur.
+    user.value = null
+  }
+})
+
+/**
+ * Vérifie la session utilisateur au démarrage de l'application.
+ */
+export const initializeAuth = async () => {
+  const { data } = await supabase.auth.getSession()
+  session.value = data.session
+  if (data.session) {
+    await fetchUserProfile(data.session.user.id)
+  }
+}

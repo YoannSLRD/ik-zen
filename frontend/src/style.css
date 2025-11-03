@@ -1,0 +1,204 @@
+/* frontend/src/style.css (VERSION FINALE) */
+
+/* 1. Définition des variables pour le THÈME CLAIR (par défaut) */
+:root {
+  --ikzen-primary: #00334E;
+  --ikzen-accent: #66DDAA;
+  --ikzen-danger: #E74A3B;
+  --ikzen-warning: #F6C23E;
+  --ikzen-text: #212529;
+  --ikzen-background: #F8F9FA;
+  --ikzen-surface: #FFFFFF;
+  --ikzen-border: #DEE2E6;
+  --ikzen-white: #FFFFFF;
+
+  --bs-primary: var(--ikzen-primary);
+  --bs-primary-rgb: 0, 51, 78;
+  --bs-secondary: #6c757d;
+  --bs-success: var(--ikzen-accent);
+  --bs-success-rgb: 102, 221, 170;
+  --bs-danger: var(--ikzen-danger);
+  --bs-danger-rgb: 231, 74, 59;
+  --bs-warning: var(--ikzen-warning);
+  --bs-warning-rgb: 246, 194, 62;
+  --bs-link-color: var(--ikzen-primary);
+  --bs-link-hover-color: #005a8d; 
+}
+
+/* 2. DÉFINITION UNIQUE ET COMPLÈTE POUR LE THÈME SOMBRE */
+html[data-theme='dark'] {
+  /* Variables de base */
+  --ikzen-text: #E0E0E0;
+  --ikzen-background: #121212;
+  --ikzen-surface: #1E1E1E;
+  --ikzen-border: #424242;
+  
+  /* Variables Bootstrap surchargées */
+  --bs-body-color: var(--ikzen-text);
+  --bs-body-bg: var(--ikzen-background);
+  --bs-secondary-color: rgba(224, 224, 224, 0.75);
+  --bs-link-color: var(--ikzen-accent);
+  --bs-link-hover-color: #96e9c6;
+  --bs-tertiary-bg: var(--ikzen-surface);
+  --bs-border-color: var(--ikzen-border);
+
+  /* Formulaires */
+  --bs-form-control-bg: #2a2a2a;
+  --bs-form-control-color: var(--ikzen-text);
+  --bs-border-color: var(--ikzen-border);
+  --bs-input-group-addon-bg: #2a2a2a;
+
+  .ts-control, .ts-dropdown {
+    color: var(--ikzen-text);
+    background-color: var(--bs-form-control-bg);
+    border-color: var(--ikzen-border);
+  }
+  .ts-control > input {
+    color: var(--ikzen-text) !important;
+  }
+  
+  /* Tableaux */
+  --bs-table-color: var(--ikzen-text);
+  --bs-table-bg: var(--ikzen-surface);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+  --bs-table-border-color: var(--ikzen-border);
+
+  /* Surcharges spécifiques */
+  .text-gray-300 { color: #555 !important; }
+  .bg-light { background-color: var(--ikzen-surface) !important; }
+  .text-primary { color: var(--ikzen-accent) !important; }
+  .text-bg-primary { color: #fff !important; background-color: var(--ikzen-primary) !important; }
+  
+  .btn-primary {
+    background-color: var(--ikzen-accent) !important;
+    border-color: var(--ikzen-accent) !important;
+    color: var(--ikzen-primary) !important;
+  }
+  .btn-primary:hover {
+    background-color: #96e9c6 !important;
+    border-color: #96e9c6 !important;
+  }
+  
+  .btn-outline-primary {
+    color: var(--ikzen-accent) !important;
+    border-color: var(--ikzen-accent) !important;
+  }
+  .btn-outline-primary:hover {
+    color: var(--ikzen-primary) !important;
+    background-color: var(--ikzen-accent) !important;
+    border-color: var(--ikzen-accent) !important;
+  }
+
+  .alert-warning {
+    background-color: rgba(246, 194, 62, 0.15);
+    border-color: rgba(246, 194, 62, 0.3);
+    color: var(--ikzen-warning);
+  }
+
+  .alert-warning .alert-link {
+    color: #ffdead; /* Une couleur jaune/orange claire qui contraste bien */
+    text-decoration: underline;
+  }
+
+  .alert-light {
+    background-color: var(--ikzen-surface);
+    color: var(--ikzen-text);
+    border-color: var(--ikzen-border);
+  }
+  /* --- AJOUTER CE BLOC POUR LA PAGINATION --- */
+  .page-link {
+    background-color: var(--ikzen-surface);
+    border-color: var(--ikzen-border);
+  }
+  .page-link:hover {
+    background-color: #343a40; /* Un gris un peu plus clair pour le survol */
+    border-color: var(--ikzen-border);
+  }
+  .page-item.active .page-link {
+    background-color: var(--ikzen-accent);
+    border-color: var(--ikzen-accent);
+    color: var(--ikzen-primary); /* Texte foncé pour un bon contraste */
+  }
+  .page-item.disabled .page-link {
+    background-color: var(--ikzen-surface);
+    border-color: var(--ikzen-border);
+    color: #6c757d; /* Un gris muted mais lisible */
+  }
+
+  /* Style pour l'input de type "file" de Bootstrap en mode sombre */
+  .form-control::file-selector-button {
+    background-color: #343a40;
+    color: var(--ikzen-text);
+    border-color: var(--ikzen-border);
+  }
+  .form-control:hover:not(:disabled):not([readonly])::file-selector-button {
+    background-color: #495057;
+  }
+
+  .btn-outline-secondary {
+    color: var(--bs-secondary-color);
+    border-color: var(--bs-secondary-color);
+  }
+  .btn-outline-secondary:hover {
+    color: var(--kilozen-surface);
+    background-color: var(--bs-secondary-color);
+    border-color: var(--bs-secondary-color);
+  }
+}
+
+html[data-theme='dark'] .table {
+  --bs-table-color: var(--ikzen-text);
+  --bs-table-bg: var(--ikzen-surface);
+  --bs-table-border-color: var(--ikzen-border);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* On doit forcer la couleur du texte dans les en-têtes et les cellules */
+html[data-theme='dark'] .table th,
+html[data-theme='dark'] .table td {
+    color: var(--ikzen-text);
+}
+
+/* 3. Styles globaux (ne changent pas) */
+body {
+  background-color: var(--ikzen-background);
+  color: var(--ikzen-text);
+  min-height: 100vh;
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.card, .modal-content {
+  background-color: var(--ikzen-surface);
+  border: 1px solid var(--ikzen-border);
+  color: var(--ikzen-text); /* Ajout pour les modales */
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.btn-primary {
+  background-color: var(--ikzen-primary) !important;
+  border-color: var(--ikzen-primary) !important;
+}
+.btn-primary:hover {
+  background-color: #005a8d !important;
+  border-color: #005a8d !important;
+}
+.btn-outline-primary {
+  color: var(--ikzen-primary) !important;
+  border-color: var(--ikzen-primary) !important;
+}
+.btn-outline-primary:hover {
+  color: var(--ikzen-white) !important;
+  background-color: var(--ikzen-primary) !important;
+  border-color: var(--ikzen-primary) !important;
+}
+.sidebar-heading {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- STYLE POUR LES MODALES IMBRIQUÉES --- */
+.modal.is-superposed {
+  /* On le rend flou et non-cliquable */
+  filter: blur(4px);
+  pointer-events: none;
+}
