@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { session } from '@/store/userStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import DashboardLayout from '@/views/Dashboard/DashboardLayout.vue';
+import DashboardLayout from '@/views/dashboard/DashboardLayout.vue';
 
 import Home from '@/views/Home.vue';
 import Login from '@/views/Login.vue';
