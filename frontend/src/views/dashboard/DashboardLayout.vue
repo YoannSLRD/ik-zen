@@ -144,8 +144,9 @@
           </div>
         </aside>
 
+            
         <!-- Colonne du Contenu Principal -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <main v-if="user" class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
           <router-view :key="$route.fullPath" />
         </main>
       </div>
