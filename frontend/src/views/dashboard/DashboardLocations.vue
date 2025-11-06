@@ -80,35 +80,7 @@
     </nav>
       
     <!-- Modale d'ajout/modification -->
-    <div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="locationModalLabel">{{ isEditing ? 'Modifier le lieu' : 'Ajouter un lieu' }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="handleSubmit">
-              <div class="mb-3">
-                <label for="locName" class="form-label">Nom du lieu</label>
-                <input id="locName" class="form-control" v-model="currentLocation.name" required />
-              </div>
-              <div class="mb-3">
-                <label for="locAddress" class="form-label">Adresse complète</label>
-                <input id="locAddress" class="form-control" v-model="currentLocation.address" required />
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="submit" class="btn btn-primary" :disabled="loadingForm">
-                  <span v-if="loadingForm" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  {{ loadingForm ? 'Enregistrement...' : 'Enregistrer' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Notre nouveau composant de confirmation -->
     <ConfirmModal
@@ -236,59 +208,22 @@ const fetchLocations = async () => {
 const openAddModal = () => {
   isEditing.value = false;
   currentLocation.value = { id: null, name: '', address: '' };
-  if (locationModal) locationModal.show();
+  locationAddModal.value?.show();
 };
 
 const openEditModal = (location) => {
   isEditing.value = true;
   currentLocation.value = { ...location };
-  if (locationModal) locationModal.show();
+  // Pour l'instant, on ne peut pas éditer avec l'autocomplétion,
+  // on utilisera donc le modal d'ajout pour "remplacer" le lieu.
+  // C'est une simplification pour l'instant.
+  toast.info("Pour modifier, veuillez supprimer l'ancien lieu et en créer un nouveau.");
 };
 
 const handleSubmit = async () => {
-  loadingForm.value = true;
-  if (isEditing.value) {
-    try {
-      await api.put(`/locations/${currentLocation.value.id}`, currentLocation.value);
-      toast.success("Lieu modifié avec succès !");
-      if (locationModal) locationModal.hide();
-      await fetchLocations();
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Erreur lors de la modification.");
-    } finally {
-      loadingForm.value = false;
-    }
-  } else {
-    // ***** NOUVELLE LOGIQUE "OPTIMISTIC" POUR L'AJOUT *****
-
-    // 1. On prépare le nouvel objet
-    const newLocation = { 
-      id: Date.now(), // ID temporaire pour la clé :key de Vue
-      ...currentLocation.value 
-    };
-
-    // 2. On met à jour l'interface immédiatement
-    locations.value.unshift(newLocation); // unshift() l'ajoute au début de la liste, c'est plus visible
-    if (locationModal) locationModal.hide();
-
-    // 3. On envoie la requête à l'API en arrière-plan
-    try {
-      const { data: savedLocation } = await api.post('/locations', currentLocation.value);
-      
-      // 4. On remplace l'objet temporaire par celui de la BDD (qui a le bon ID)
-      const index = locations.value.findIndex(loc => loc.id === newLocation.id);
-      if (index !== -1) {
-        locations.value[index] = savedLocation;
-      }
-      toast.success("Lieu ajouté avec succès !");
-
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Le lieu n'a pas pu être ajouté.");
-      // 5. En cas d'erreur, on annule l'ajout dans l'interface
-      locations.value = locations.value.filter(loc => loc.id !== newLocation.id);
-    }
-    loadingForm.value = false;
-  }
+    // Cette fonction est maintenant gérée par LocationAddModal
+    // On rafraîchit simplement les données quand il a fini.
+    await fetchLocations();
 };
 
 const handleDelete = (location) => {
