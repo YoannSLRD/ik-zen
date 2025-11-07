@@ -36,17 +36,29 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // --- Middlewares ---
-const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // L'origine de votre frontend
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Méthodes autorisées
-    allowedHeaders: "Content-Type, Authorization", // En-têtes autorisés
-    credentials: true // Si vous utilisez des cookies/sessions (pas le cas ici, mais c'est une bonne pratique)
-  };
+const whitelist = [
+    'http://localhost:5173', // Ton frontend local
+    'https://ik-zen.vercel.app', // Ton frontend de production
+    // Vercel génère des URL de preview dynamiques, on peut les autoriser avec une expression régulière
+    /^https:\/\/ik-zen-.*-yoannslrds-projects\.vercel\.app$/ 
+];
+  
+ const corsOptions = {
+    origin: function (origin, callback) {
+      // Autoriser les requêtes sans 'origin' (comme Postman ou les requêtes serveur-à-serveur comme le webhook Stripe)
+      if (!origin || whitelist.some(url => typeof url === 'string' ? url === origin : url.test(origin))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    allowedHeaders: "Content-Type, Authorization, Stripe-Signature", // IMPORTANT: On ajoute Stripe-Signature
+    credentials: true
+};
   
 app.use(cors(corsOptions));
-// La ligne app.options est maintenant gérée par la configuration ci-dessus, mais la garder ne fait pas de mal
-app.options('*', cors(corsOptions)); 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.options('*', cors(corsOptions)); // Gère les requêtes pre-flight pour toutes les routes
 
 // Le webhook doit être défini avant express.json() pour recevoir le corps brut
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
