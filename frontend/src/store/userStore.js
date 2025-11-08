@@ -14,7 +14,7 @@ export const session = ref(null)
  * Met à jour les informations du profil de l'utilisateur.
  * C'est une requête à votre propre backend pour obtenir les données de la table 'profiles'.
  */
-const fetchUserProfile = async (userId) => {
+export const fetchUserProfile = async (userId) => {
   const token = session.value?.access_token
   if (!token) return
 
