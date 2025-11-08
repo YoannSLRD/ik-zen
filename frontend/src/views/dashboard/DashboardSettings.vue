@@ -44,7 +44,7 @@
               <p class="card-text text-muted small">Ce logo apparaîtra sur vos exports PDF.</p>
               
               <div v-if="user.company_logo_url" class="logo-container mb-3">
-                <img :src="`${apiBaseUrl}${user.company_logo_url}`" alt="Logo de l'entreprise" class="company-logo-preview">
+                <img :src="`${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}${user.company_logo_url}`" alt="Logo de l'entreprise" class="company-logo-preview">
               </div>
               <div v-else class="logo-placeholder mb-3">
                 <p>Aucun logo défini</p>
@@ -186,7 +186,6 @@ const newPassword = ref('');
 const loadingEmail = ref(false);
 const loadingPassword = ref(false);
 const isUploading = ref(false);
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
 
 // ***** NOUVELLES VARIABLES POUR LE PROFIL *****
 const profile = ref({ firstName: '', lastName: '' });
