@@ -1106,7 +1106,7 @@ app.get('/api/export/pdf/:year', authenticateToken, async (req, res) => {
         const margin = 50;
         
         // --- 4. FONCTIONS UTILITAIRES POUR DESSINER LE PDF ---
-        const drawHeader = (doc) => {
+        const drawHeader = async (doc) => {
             const gradient = doc.linearGradient(0, 0, pageW, 150);
             // CORRECTION : On utilise les bonnes variables de couleur
             gradient.stop(0.3, primaryColor).stop(1, '#005a8d');
@@ -1116,8 +1116,21 @@ app.get('/api/export/pdf/:year', authenticateToken, async (req, res) => {
             doc.fillOpacity(1).fillColor('white').roundedRect(margin, 30, 90, 90, 10).fill();
             
             const logoPath = user.company_logo_url ? path.join(__dirname, user.company_logo_url) : path.join(__dirname, 'assets', 'images', 'default-logo.png');
-            if (fs.existsSync(logoPath)) {
-                doc.image(logoPath, margin + 5, 35, { fit: [80, 80], align: 'center', valign: 'center' });
+            if (user.company_logo_url) {
+                try {
+                    const imageResponse = await axios.get(user.company_logo_url, { responseType: 'arraybuffer' });
+                    const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+                    doc.image(imageBuffer, margin + 5, 35, { fit: [80, 80], align: 'center', valign: 'center' });
+                } catch (error) {
+                    console.error("Impossible de télécharger le logo depuis l'URL pour le PDF:", error.message);
+                    // Si le téléchargement échoue, on met le logo par défaut
+                    const defaultLogoPath = path.join(__dirname, 'assets', 'images', 'default-logo.png');
+                    doc.image(defaultLogoPath, margin + 5, 35, { fit: [80, 80], align: 'center', valign: 'center' });
+                }
+            } else {
+                // S'il n'y a pas d'URL, on met le logo par défaut
+                const defaultLogoPath = path.join(__dirname, 'assets', 'images', 'default-logo.png');
+                doc.image(defaultLogoPath, margin + 5, 35, { fit: [80, 80], align: 'center', valign: 'center' });
             }
 
             const textLeftMargin = margin + 120;
@@ -1175,7 +1188,7 @@ app.get('/api/export/pdf/:year', authenticateToken, async (req, res) => {
         };
 
         // --- 5. GÉNÉRATION DE LA PAGE 1 : LE RÉSUMÉ ---
-        drawHeader(doc);
+        await drawHeader(doc);
         let currentY = 170;
 
         const titleTextResume = 'RÉSUMÉ ANNUEL';
@@ -1239,7 +1252,7 @@ app.get('/api/export/pdf/:year', authenticateToken, async (req, res) => {
         // --- 6. GÉNÉRATION DES PAGES SUIVANTES : DÉTAIL DES TRAJETS ---
         if (trips.length > 0) {
             doc.addPage();
-            drawHeader(doc);
+            await drawHeader(doc);
             let detailY = 170;
             const titleTextTrips = 'DÉTAIL DES TRAJETS';
             doc.font('NotoSans-Bold').fontSize(14).fillColor(primaryColor).text(titleTextTrips, margin, detailY);
