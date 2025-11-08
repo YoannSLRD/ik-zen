@@ -44,7 +44,7 @@
               <p class="card-text text-muted small">Ce logo apparaîtra sur vos exports PDF.</p>
               
               <div v-if="user.company_logo_url" class="logo-container mb-3">
-                <img :src="`${apiBaseUrl}${user.company_logo_url}`" alt="Logo de l'entreprise" class="company-logo-preview">
+                <img :src="user.company_logo_url" alt="Logo de l'entreprise" class="company-logo-preview">
               </div>
               <div v-else class="logo-placeholder mb-3">
                 <p>Aucun logo défini</p>
@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch} from 'vue';
 import api from '@/api'; // <-- MODIFICATION 1: Importer l'instance centralisée
 import { supabase } from '@/supabaseClient.js';
 import { user } from '@/store/userStore'; // <-- MODIFICATION 2: Importer l'utilisateur du store
@@ -186,11 +186,6 @@ const newPassword = ref('');
 const loadingEmail = ref(false);
 const loadingPassword = ref(false);
 const isUploading = ref(false);
-
-const apiBaseUrl = computed(() => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-  return baseUrl.replace('/api', '');
-});
 
 // ***** NOUVELLES VARIABLES POUR LE PROFIL *****
 const profile = ref({ firstName: '', lastName: '' });

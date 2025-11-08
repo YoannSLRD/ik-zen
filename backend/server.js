@@ -22,20 +22,11 @@ const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- Configuration de Multer pour l'upload de fichiers ---
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = 'uploads/';
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath);
-        }
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        // Crée un nom de fichier unique en utilisant l'UUID de l'utilisateur
-        cb(null, `logo-${req.user.id}${path.extname(file.originalname)}`);
-    }
-});
-const upload = multer({ storage: storage });
+// On configure Multer pour garder le fichier en mémoire (buffer)
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // Limite de 5MB
+  });
 
 // --- Middlewares ---
 const whitelist = [
@@ -262,42 +253,61 @@ app.put('/api/me', authenticateToken, async (req, res) => {
 
 app.post('/api/upload-logo', authenticateToken, upload.single('logo'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni.' });
+  
     try {
-        const logoUrl = `/uploads/${req.file.filename}`;
-        // MODIFIÉ : On met à jour la table 'profiles'
-        await db.query('UPDATE public.profiles SET company_logo_url = $1 WHERE id = $2', [logoUrl, req.user.id]);
-        res.json({ message: 'Logo mis à jour !', logoUrl: logoUrl });
+      const file = req.file;
+      const filePath = `${req.user.id}/${Date.now()}-${file.originalname}`;
+  
+      // Upload du fichier sur Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true, // Écrase le fichier s'il existe
+        });
+  
+      if (uploadError) throw uploadError;
+  
+      // Récupération de l'URL publique
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath);
+  
+      const logoUrl = urlData.publicUrl;
+  
+      // Sauvegarde de l'URL dans la base de données
+      await db.query('UPDATE public.profiles SET company_logo_url = $1 WHERE id = $2', [logoUrl, req.user.id]);
+  
+      res.json({ message: 'Logo mis à jour !', logoUrl: logoUrl });
     } catch (error) {
-        console.error("Erreur d'upload de logo:", error);
-        res.status(500).json({ error: "Erreur serveur lors de l'upload." });
+      console.error("Erreur d'upload de logo sur Supabase:", error);
+      res.status(500).json({ error: "Erreur serveur lors de l'upload." });
     }
 });
 
 app.delete('/api/delete-logo', authenticateToken, async (req, res) => {
     try {
-        // MODIFIÉ : On récupère depuis la table 'profiles'
-        const { rows } = await db.query('SELECT company_logo_url FROM public.profiles WHERE id = $1', [req.user.id]);
-        
-        if (rows.length === 0 || !rows[0].company_logo_url) {
-            return res.status(404).json({ error: 'Aucun logo à supprimer.' });
-        }
-        
-        const logoUrl = rows[0].company_logo_url;
-        const filename = path.basename(logoUrl);
-        const filePath = path.join(__dirname, 'uploads', filename);
-
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
-        // MODIFIÉ : On met à jour la table 'profiles'
-        await db.query('UPDATE public.profiles SET company_logo_url = NULL WHERE id = $1', [req.user.id]);
-        
-        res.json({ message: 'Logo supprimé avec succès.' });
-
+      const { rows } = await db.query('SELECT company_logo_url FROM public.profiles WHERE id = $1', [req.user.id]);
+      const logoUrl = rows[0]?.company_logo_url;
+  
+      if (!logoUrl) {
+        return res.status(404).json({ error: 'Aucun logo à supprimer.' });
+      }
+  
+      // Extrait le nom du fichier depuis l'URL complète
+      const filePath = logoUrl.substring(logoUrl.lastIndexOf('logos/') + 'logos/'.length);
+  
+      // Supprime le fichier de Supabase Storage
+      const { error: removeError } = await supabase.storage.from('logos').remove([filePath]);
+      if (removeError) console.error("Avertissement: le fichier n'a pas pu être supprimé de Supabase Storage, mais la référence sera retirée.", removeError);
+  
+      // Met à jour la base de données
+      await db.query('UPDATE public.profiles SET company_logo_url = NULL WHERE id = $1', [req.user.id]);
+  
+      res.json({ message: 'Logo supprimé avec succès.' });
     } catch (error) {
-        console.error("Erreur lors de la suppression du logo:", error);
-        res.status(500).json({ error: 'Erreur serveur lors de la suppression du logo.' });
+      console.error("Erreur lors de la suppression du logo:", error);
+      res.status(500).json({ error: 'Erreur serveur.' });
     }
 });
 
