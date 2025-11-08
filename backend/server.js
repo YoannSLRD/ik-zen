@@ -19,6 +19,8 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 const app = express();
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // --- Configuration de Multer pour l'upload de fichiers ---
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
