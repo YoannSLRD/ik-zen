@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
       <h1 class="h2"><font-awesome-icon icon="fa-solid fa-map-marker-alt" /> Mes Lieux</h1>
       <div class="btn-toolbar mb-2 mb-md-0">
-        <button class="btn btn-sm btn-primary" @click="openAddLocationQuickModal">
+        <button class="btn btn-sm btn-primary" @click="openAddModal">
           <font-awesome-icon icon="fa-solid fa-plus" />
           <span class="d-none d-md-inline ms-1">Ajouter un lieu</span>
         </button>
@@ -234,15 +234,11 @@ const fetchLocations = async () => {
 };
 
 const openAddModal = () => {
-  isEditing.value = false;
-  currentLocation.value = { id: null, name: '', address: '' };
-  if (locationModal) locationModal.show();
+  locationAddModal.value?.show();
 };
 
 const openEditModal = (location) => {
-  isEditing.value = true;
-  currentLocation.value = { ...location };
-  if (locationModal) locationModal.show();
+  toast.info("La modification de lieux sera bientôt disponible. Pour l'instant, vous pouvez supprimer ce lieu et en créer un nouveau.");
 };
 
 const handleSubmit = async () => {
