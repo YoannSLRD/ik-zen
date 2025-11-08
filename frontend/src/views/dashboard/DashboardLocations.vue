@@ -81,7 +81,6 @@
       
     <!-- Modale d'ajout/modification -->
     
-
     <!-- Notre nouveau composant de confirmation -->
     <ConfirmModal
       ref="confirmModal"
@@ -91,16 +90,25 @@
     />
 
     <LocationAddModal ref="locationAddModal" @location-added="onLocationAddedQuick" />
+
+    <!-- Notre nouveau modal d'édition -->
+    <LocationEditModal 
+      v-if="currentLocation.id" 
+      ref="locationEditModal" 
+      :location="currentLocation" 
+      @location-updated="onLocationUpdated" 
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import api from '@/api'; // <-- MODIFICATION 1: Importer l'instance centralisée
 import { useToast } from 'vue-toastification';
 import { Modal } from 'bootstrap';
 import ConfirmModal from '@/components/ConfirmModal.vue';
 import LocationAddModal from '@/components/LocationAddModal.vue';
+import LocationEditModal from '@/components/LocationEditModal.vue';
 
 const loadingForm = ref(false);
 const toast = useToast();
@@ -118,6 +126,7 @@ const confirmModal = ref(null);
 const confirmMessage = ref('');
 const locationToDelete = ref(null);
 const locationAddModal = ref(null);
+const locationEditModal = ref(null);
 
 const openAddLocationQuickModal = () => {
   locationAddModal.value?.show();
@@ -210,7 +219,19 @@ const openAddModal = () => {
 };
 
 const openEditModal = (location) => {
-  toast.info("La modification de lieux sera bientôt disponible. Pour l'instant, vous pouvez supprimer ce lieu et en créer un nouveau.");
+  currentLocation.value = { ...location }; // On stocke le lieu à modifier
+  // On attend que Vue mette à jour le DOM avant de montrer le modal
+  nextTick(() => {
+    locationEditModal.value?.show();
+  });
+};
+
+const onLocationUpdated = (updatedLocation) => {
+  // On met à jour la liste des lieux sans avoir à tout recharger
+  const index = locations.value.findIndex(loc => loc.id === updatedLocation.id);
+  if (index !== -1) {
+    locations.value[index] = updatedLocation;
+  }
 };
 
 const handleSubmit = async () => {
