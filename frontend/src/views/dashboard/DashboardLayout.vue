@@ -84,6 +84,11 @@
                   <font-awesome-icon icon="fa-solid fa-cog" class="me-2" /> Paramètres & Profil
                 </router-link>
               </li>
+              <li v-if="user && user.role === 'admin'" class="nav-item">
+                <router-link class="nav-link" to="/admin" @click="closeOffcanvas">
+                  <font-awesome-icon icon="fa-solid fa-user-shield" class="me-2" /> Administration
+                </router-link>
+              </li>
               <li v-if="user && user.subscription_status !== 'active'" class="nav-item">
                 <router-link class="nav-link" to="/pricing">
                   <font-awesome-icon icon="fa-solid fa-star" class="me-2" /> Passer Pro

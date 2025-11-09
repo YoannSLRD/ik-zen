@@ -110,7 +110,38 @@ const authenticateToken = async (req, res, next) => {
     next();
 };
 
+const isAdmin = (req, res, next) => {
+    // Ce middleware doit être utilisé APRES authenticateToken
+    if (req.user && req.user.role === 'admin') {
+      next(); // L'utilisateur est un admin, on continue
+    } else {
+      res.status(403).json({ error: 'Accès refusé. Droits administrateur requis.' });
+    }
+};
+
 // --- Routes d'Authentification (entièrement refactorées pour Supabase) ---
+app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      // On récupère l'ID, l'email, la date de création depuis la table 'users' de Supabase
+      // et le statut de l'abonnement et le nom/prénom depuis notre table 'profiles'
+      const { rows } = await db.query(`
+        SELECT 
+          u.id, 
+          u.email, 
+          u.created_at,
+          p.first_name,
+          p.last_name,
+          p.subscription_status
+        FROM auth.users u
+        LEFT JOIN public.profiles p ON u.id = p.id
+        ORDER BY u.created_at DESC
+      `);
+      res.json(rows);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs pour l'admin:", error);
+      res.status(500).json({ error: 'Erreur serveur.' });
+    }
+});
 
 app.post('/api/register', async (req, res) => {
     const { email, password } = req.body;
