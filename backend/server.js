@@ -111,6 +111,8 @@ const authenticateToken = async (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
+    console.log('Middleware isAdmin - Contenu de req.user:', req.user); 
+    
     // Ce middleware doit être utilisé APRES authenticateToken
     if (req.user && req.user.role === 'admin') {
       next(); // L'utilisateur est un admin, on continue

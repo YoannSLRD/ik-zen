@@ -84,11 +84,6 @@
                   <font-awesome-icon icon="fa-solid fa-cog" class="me-2" /> Paramètres & Profil
                 </router-link>
               </li>
-              <li v-if="user && user.role === 'admin'" class="nav-item">
-                <router-link class="nav-link" to="/admin" @click="closeOffcanvas">
-                  <font-awesome-icon icon="fa-solid fa-user-shield" class="me-2" /> Administration
-                </router-link>
-              </li>
               <li v-if="user && user.subscription_status !== 'active'" class="nav-item">
                 <router-link class="nav-link" to="/pricing">
                   <font-awesome-icon icon="fa-solid fa-star" class="me-2" /> Passer Pro
@@ -107,6 +102,11 @@
                 Administration
               </h6>
               <ul class="nav flex-column mb-2">
+                <li v-if="user && user.role === 'admin'" class="nav-item">
+                  <router-link class="nav-link" to="/admin" @click="closeOffcanvas">
+                    <font-awesome-icon icon="fa-solid fa-user-shield" class="me-2" /> Administration
+                  </router-link>
+                </li>
                 <li class="nav-item">
                   <!-- Remplacez le href par l'URL de VOTRE table tax_rates -->
                   <a class="nav-link" href="https://supabase.com/dashboard/project/zlfrkwleglxrfglfqsnz/editor/49153?schema=public" target="_blank">
