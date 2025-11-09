@@ -110,14 +110,29 @@ const authenticateToken = async (req, res, next) => {
     next();
 };
 
-const isAdmin = (req, res, next) => {
-    console.log('Middleware isAdmin - Contenu de req.user:', req.user); 
-    
+const isAdmin = async (req, res, next) => {
     // Ce middleware doit être utilisé APRES authenticateToken
-    if (req.user && req.user.role === 'admin') {
-      next(); // L'utilisateur est un admin, on continue
-    } else {
-      res.status(403).json({ error: 'Accès refusé. Droits administrateur requis.' });
+    if (!req.user || !req.user.id) {
+      return res.status(403).json({ error: 'Accès refusé. Utilisateur non identifié.' });
+    }
+  
+    try {
+      // On va chercher le rôle directement dans notre table 'profiles'
+      const { rows } = await db.query(
+        'SELECT role FROM public.profiles WHERE id = $1',
+        [req.user.id]
+      );
+  
+      const userProfile = rows[0];
+  
+      if (userProfile && userProfile.role === 'admin') {
+        next(); // L'utilisateur est bien un admin, on continue
+      } else {
+        res.status(403).json({ error: 'Accès refusé. Droits administrateur requis.' });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la vérification du rôle admin:", error);
+      res.status(500).json({ error: 'Erreur serveur lors de la vérification des permissions.' });
     }
 };
 
