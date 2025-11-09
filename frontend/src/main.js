@@ -29,9 +29,10 @@ library.add(
     faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList, faUserShield
 )
 
+// 1. On crée l'application
 const app = createApp(App)
-  
-app.use(router)
+
+// 2. On configure les plugins qui n'ont pas besoin d'attendre (Toast, FontAwesome)
 app.use(Toast, {
     transition: 'Vue-Toastification__bounce',
     maxToasts: 5,
@@ -39,8 +40,11 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// On lance l'initialisation de l'auth, et on monte l'app quand c'est prêt.
-// C'est la méthode la plus sûre pour éviter les bugs.
+// 3. On attend que l'authentification soit prête
 initializeAuth().then(() => {
+  // 4. SEULEMENT ENSUITE, on active le routeur
+  app.use(router)
+
+  // 5. Et on monte l'application
   app.mount('#app')
 })
