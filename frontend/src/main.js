@@ -29,17 +29,18 @@ library.add(
     faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList, faUserShield
 )
 
-// On initialise l'authentification AVANT de monter l'application
+const app = createApp(App)
+  
+app.use(router)
+app.use(Toast, {
+    transition: 'Vue-Toastification__bounce',
+    maxToasts: 5,
+    newestOnTop: true
+})
+app.component('font-awesome-icon', FontAwesomeIcon)
+
+// On lance l'initialisation de l'auth, et on monte l'app quand c'est prêt.
+// C'est la méthode la plus sûre pour éviter les bugs.
 initializeAuth().then(() => {
-    const app = createApp(App)
-  
-    app.use(router)
-    app.use(Toast, {
-        transition: 'Vue-Toastification__bounce',
-        maxToasts: 5,
-        newestOnTop: true
-    })
-    app.component('font-awesome-icon', FontAwesomeIcon)
-  
-    app.mount('#app')
-  })
+  app.mount('#app')
+})
