@@ -1,6 +1,6 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { session } from '@/store/userStore';
+import { session, user } from '@/store/userStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import DashboardLayout from '@/views/dashboard/DashboardLayout.vue';
