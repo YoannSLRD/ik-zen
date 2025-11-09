@@ -24,6 +24,8 @@ import DashboardVehicles from '@/views/dashboard/DashboardVehicles.vue';
 import DashboardTrips from '@/views/dashboard/DashboardTrips.vue';
 import DashboardReasons from '@/views/dashboard/DashboardReasons.vue';
 
+import AdminUsers from '@/views/admin/AdminUsers.vue';
+
 const routes = [
   {
     path: '/',
@@ -54,6 +56,14 @@ const routes = [
       { path: 'settings', name: 'DashboardSettings', component: DashboardSettings },
     ]
   },
+  {
+    path: '/admin',
+    component: DashboardLayout, // On réutilise le layout du dashboard !
+    meta: { requiresAuth: true, requiresAdmin: true }, // Double sécurité
+    children: [
+      { path: '', name: 'AdminUsers', component: AdminUsers },
+    ]
+  },
   { 
     path: '/:pathMatch(.*)*', 
     name: 'NotFound', 
@@ -68,22 +78,26 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isLoggedIn = !!session.value;
-  
+  const userRole = user.value?.role;
+
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
 
   if (isLoggedIn) {
     if (requiresGuest) {
-      next('/dashboard');
-    } else {
-      next();
+      return next('/dashboard');
     }
+    // NOUVELLE VÉRIFICATION : Si la route demande un admin mais que l'utilisateur n'en est pas un
+    if (requiresAdmin && userRole !== 'admin') {
+      return next('/dashboard'); // On le redirige vers son tableau de bord
+    }
+    return next();
   } else {
     if (requiresAuth) {
-      next('/login');
-    } else {
-      next();
+      return next('/login');
     }
+    return next();
   }
 });
 

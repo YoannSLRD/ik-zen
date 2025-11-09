@@ -20,13 +20,13 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { 
     faCar, faMapMarkerAlt, faPlus, faEdit, faTrash, faRoad, faSun, faMoon, faFileCsv,
-    faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList
+    faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList, faUserShield
 } from '@fortawesome/free-solid-svg-icons'
 
 // Ajouter toutes les icônes nécessaires à la librairie
 library.add(
     faCar, faMapMarkerAlt, faPlus, faEdit, faTrash, faRoad, faSun, faMoon, faFileCsv,
-    faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList
+    faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList, faUserShield
 )
 
 // On initialise l'authentification AVANT de monter l'application
