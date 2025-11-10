@@ -1,10 +1,17 @@
 <template>
+  <AppLoader v-if="isLoading" />
+
   <router-view v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
   </router-view>
 </template>
+
+<script setup>
+import AppLoader from './components/AppLoader.vue';
+import { isLoading } from './store/loadingStore.js';
+</script>
 
 <style>
 body {

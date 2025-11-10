@@ -29,6 +29,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { supabase } from '@/supabaseClient';
+import { isLoading } from '@/store/loadingStore';
 
 const email = ref('');
 const password = ref('');
@@ -37,6 +38,7 @@ const router = useRouter();
 
 const handleLogin = async () => {
   error.value = null;
+  isLoading.value = true; // <--- AJOUTE CETTE LIGNE
   try {
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.value,
@@ -45,6 +47,8 @@ const handleLogin = async () => {
     if (signInError) throw signInError;
     router.push('/dashboard');
   } catch (err) {
+    isLoading.value = false; // <--- AJOUTE CETTE LIGNE (pour arrêter le loader en cas d'erreur)
+    
     // ***** GESTION DE L'ERREUR SPÉCIFIQUE *****
     if (err.message && err.message.includes('Email not confirmed')) {
       error.value = "Votre compte n'a pas encore été confirmé. Veuillez vérifier vos e-mails.";
@@ -54,6 +58,9 @@ const handleLogin = async () => {
     console.error(err);
     // ****************************************
   }
+  // On ne met PAS de 'finally' ici, car le loader doit être arrêté
+  // uniquement en cas d'erreur. S'il y a succès, c'est le routeur (afterEach)
+  // qui s'occupera de l'arrêter.
 };
 </script>
 

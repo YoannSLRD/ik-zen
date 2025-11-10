@@ -16,6 +16,7 @@ import FAQ from '@/views/FAQ.vue';
 import ForgotPassword from '@/views/ForgotPassword.vue';
 import UpdatePassword from '@/views/UpdatePassword.vue';
 import NotFound from '@/views/NotFound.vue';
+import { isLoading } from '@/store/loadingStore';
 
 import DashboardHome from '@/views/dashboard/DashboardHome.vue';
 import DashboardLocations from '@/views/dashboard/DashboardLocations.vue';
@@ -99,6 +100,11 @@ router.beforeEach((to, from, next) => {
     }
     return next();
   }
+});
+
+router.afterEach(() => {
+  // Cache le loader global après chaque navigation réussie
+  isLoading.value = false;
 });
 
 export default router;
