@@ -4,11 +4,13 @@
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Chargement...</span>
       </div>
+      <p class="mt-3 text-muted">Préparation de votre espace...</p>
     </div>
   </template>
   
   <style scoped>
   .loader-overlay {
+    flex-direction: column; 
     position: fixed;
     top: 0;
     left: 0;
