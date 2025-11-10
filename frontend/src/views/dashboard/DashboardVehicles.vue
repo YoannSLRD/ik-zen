@@ -1,4 +1,4 @@
-<!-- frontend/src/views/dashboard/DashboardVehicles.vue -->
+<!-- frontend/src/views/dashboard/DashboardVehicles.vue (VERSION FINALE) -->
 <template>
   <div>
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -11,7 +11,6 @@
       </div>
     </div>
 
-    <!-- Champ de recherche (s'affiche s'il y a des véhicules) -->
     <div v-if="vehicles.length > 0" class="mb-3">
       <div class="input-group">
         <span class="input-group-text">
@@ -23,7 +22,6 @@
 
     <div v-if="isLoading" class="loading-indicator">Chargement...</div>
     <div v-else>
-      <!-- On affiche la table si la liste FILTRÉE a des résultats -->
       <div v-if="filteredVehicles.length > 0" class="table-responsive">
         <table class="table table-striped table-hover">
           <thead>
@@ -35,7 +33,6 @@
             </tr>
           </thead>
           <tbody>
-            <!-- On itère sur la liste PAGINÉE -->
             <tr v-for="vehicle in paginatedVehicles" :key="vehicle.id">
               <td>{{ vehicle.name }}</td>
               <td>{{ vehicle.fiscal_power }} CV</td>
@@ -57,11 +54,9 @@
           </tbody>
         </table>
       </div>
-      <!-- Message si la recherche ne donne aucun résultat -->
       <div v-else-if="searchQuery && vehicles.length > 0" class="alert alert-warning">
         Aucun véhicule ne correspond à votre recherche.
       </div>
-      <!-- Message s'il n'y a aucun véhicule du tout -->
       <div v-else class="alert alert-light text-center p-4">
         <h4 class="alert-heading">Enregistrez votre véhicule</h4>
         <p>Ajoutez le ou les véhicules que vous utilisez pour vos déplacements professionnels. Le premier véhicule ajouté sera défini par défaut.</p>
@@ -73,7 +68,6 @@
       </div>
     </div>
     
-    <!-- Pagination (s'affiche si plus d'une page) -->
     <nav v-if="totalPages > 1" aria-label="Page navigation">
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -88,121 +82,70 @@
       </ul>
     </nav>
     
-    <!-- Modale d'ajout/modification -->
-    <div class="modal fade" id="vehicleModal" tabindex="-1" aria-labelledby="vehicleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="vehicleModalLabel">{{ isEditing ? 'Modifier le véhicule' : 'Ajouter un véhicule' }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="handleSubmit">
-              <div class="mb-3">
-                <label for="vehName" class="form-label">Nom du véhicule</label>
-                <input id="vehName" class="form-control" v-model="currentVehicle.name" required />
-              </div>
-              <div class="mb-3">
-                <label for="vehType" class="form-label">Type de véhicule</label>
-                <select id="vehType" class="form-select" v-model="currentVehicle.vehicle_type" required>
-                  <option value="car">Voiture (Thermique / Hybride)</option>
-                  <option value="electric_car">Voiture Électrique</option>
-                  <option value="motorcycle">Deux-roues (> 50cm³)</option>
-                  <option value="moped">Cyclomoteur (≤ 50cm³)</option> <!-- NOUVELLE OPTION -->
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="vehFiscal" class="form-label">Puissance Fiscale (CV)</label>
-                <input id="vehFiscal" type="number" class="form-control" v-model="currentVehicle.fiscal_power" required min="1" />
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="submit" class="btn btn-primary" :disabled="loadingForm">
-                  <span v-if="loadingForm" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  {{ loadingForm ? 'Enregistrement...' : 'Enregistrer' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notre composant de confirmation -->
     <ConfirmModal
       ref="confirmModal"
       title="Confirmer la suppression"
       :message="confirmMessage"
       @confirm="onConfirmDelete"
     />
+
+    <VehicleAddModal ref="vehicleAddModal" @vehicle-added="onVehicleAdded" />
+
+    <VehicleEditModal 
+      v-if="currentVehicle.id"
+      ref="vehicleEditModal"
+      :vehicle="currentVehicle"
+      @vehicle-updated="onVehicleUpdated"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import api from '@/api'; // <-- MODIFICATION 1: Importer l'instance centralisée
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import api from '@/api';
 import { useToast } from 'vue-toastification';
-import { Modal } from 'bootstrap';
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import VehicleEditModal from '@/components/VehicleEditModal.vue';
+import VehicleAddModal from '@/components/VehicleAddModal.vue';
 
 const toast = useToast();
 const isLoading = ref(true);
 const vehicles = ref([]);
-const isEditing = ref(false);
 const currentVehicle = ref({ id: null, name: '', fiscal_power: '', vehicle_type: 'car' });
-const loadingForm = ref(false);
 
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
+const confirmModal = ref(null);
+const vehicleToDelete = ref(null);
+const confirmMessage = ref('');
+const vehicleEditModal = ref(null);
+const vehicleAddModal = ref(null);
+
 const filteredVehicles = computed(() => {
-  if (!searchQuery.value) {
-    return vehicles.value;
-  }
+  if (!searchQuery.value) return vehicles.value;
   const lowerCaseQuery = searchQuery.value.toLowerCase();
   return vehicles.value.filter(vehicle =>
     vehicle.name.toLowerCase().includes(lowerCaseQuery)
   );
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredVehicles.value.length / itemsPerPage.value);
-});
-
+const totalPages = computed(() => Math.ceil(filteredVehicles.value.length / itemsPerPage.value));
 const paginatedVehicles = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredVehicles.value.slice(start, end);
 });
 
-const goToPage = (pageNumber) => {
-  if (pageNumber >= 1 && pageNumber <= totalPages.value) currentPage.value = pageNumber;
-};
+const goToPage = (pageNumber) => { if (pageNumber >= 1 && pageNumber <= totalPages.value) currentPage.value = pageNumber; };
 const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
 
-watch(searchQuery, () => {
-  currentPage.value = 1;
-});
-
-let vehicleModal = null;
-const confirmModal = ref(null);
-const confirmMessage = ref('');
-const vehicleToDelete = ref(null);
+watch(searchQuery, () => { currentPage.value = 1; });
 
 onMounted(() => {
-  const modalElement = document.getElementById('vehicleModal');
-  if (modalElement) {
-    vehicleModal = new Modal(modalElement);
-  }
   fetchVehicles();
-});
-
-onUnmounted(() => {
-  if (vehicleModal) {
-    vehicleModal.dispose();
-  }
 });
 
 const fetchVehicles = async () => {
@@ -218,63 +161,46 @@ const fetchVehicles = async () => {
 };
 
 const openAddModal = () => {
-  isEditing.value = false;
-  currentVehicle.value = { id: null, name: '', fiscal_power: '', vehicle_type: 'car' };
-  if (vehicleModal) vehicleModal.show();
+  vehicleAddModal.value?.show();
+};
+
+const onVehicleAdded = () => {
+  fetchVehicles();
 };
 
 const openEditModal = (vehicle) => {
-  isEditing.value = true;
   currentVehicle.value = { ...vehicle };
-  if (vehicleModal) vehicleModal.show();
+  nextTick(() => {
+    vehicleEditModal.value?.show();
+  });
+};
+
+const onVehicleUpdated = (updatedVehicle) => {
+  const index = vehicles.value.findIndex(v => v.id === updatedVehicle.id);
+  if (index !== -1) {
+    vehicles.value[index] = updatedVehicle;
+  }
 };
 
 const handleDelete = (vehicle) => {
   vehicleToDelete.value = vehicle;
   confirmMessage.value = `Êtes-vous sûr de vouloir supprimer le véhicule "${vehicle.name}" ?`;
-  if (confirmModal.value) {
-    confirmModal.value.show();
-  }
+  confirmModal.value?.show();
 };
 
 const onConfirmDelete = async () => {
   if (!vehicleToDelete.value) return;
-
   const vehicleToRemove = vehicleToDelete.value;
   const originalVehicles = [...vehicles.value];
-
-  // 1. Mettre à jour l'UI immédiatement
   vehicles.value = vehicles.value.filter(v => v.id !== vehicleToRemove.id);
   
-  // 2. Créer un toast "en attente" et récupérer son ID
-  const toastId = toast.info(
-    `Suppression de "${vehicleToRemove.name}"...`,
-    { timeout: false } // Le toast ne disparaîtra pas tout seul
-  );
+  const toastId = toast.info(`Suppression de "${vehicleToRemove.name}"...`, { timeout: false });
   
   try {
-    // 3. Envoyer la requête à l'API
     await api.delete(`/vehicles/${vehicleToRemove.id}`);
-    
-    // 4. Mettre à jour le toast existant en "succès"
-    toast.update(toastId, {
-      content: "Véhicule supprimé avec succès !",
-      options: {
-        type: 'success',
-        timeout: 4000, // Disparaît après 4 secondes
-      },
-    });
-
+    toast.update(toastId, { content: "Véhicule supprimé avec succès !", options: { type: 'success', timeout: 4000 } });
   } catch (error) {
-    // 5. En cas d'erreur, mettre à jour le toast en "échec"
-    toast.update(toastId, {
-      content: error.response?.data?.error || "Le véhicule n'a pas pu être supprimé.",
-      options: {
-        type: 'error',
-        timeout: 6000, // On laisse le message d'erreur plus longtemps
-      },
-    });
-    // Et on restaure la liste
+    toast.update(toastId, { content: error.response?.data?.error || "Le véhicule n'a pas pu être supprimé.", options: { type: 'error', timeout: 6000 } });
     vehicles.value = originalVehicles;
   }
   
@@ -288,40 +214,6 @@ const setDefault = async (id) => {
     fetchVehicles();
   } catch (error) {
     toast.error("Erreur lors de la mise à jour.");
-  }
-};
-
-const handleSubmit = async () => {
-  loadingForm.value = true;
-  if (isEditing.value) {
-    // Logique classique pour la modification
-    try {
-      await api.put(`/vehicles/${currentVehicle.value.id}`, currentVehicle.value);
-      toast.success("Véhicule modifié avec succès !");
-      if (vehicleModal) vehicleModal.hide();
-      fetchVehicles();
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Erreur lors de la modification.");
-    } finally {
-      loadingForm.value = false;
-    }
-  } else {
-    // Logique optimistic pour l'ajout
-    const newVehicle = { id: Date.now(), ...currentVehicle.value };
-    vehicles.value.unshift(newVehicle);
-    if (vehicleModal) vehicleModal.hide();
-
-    try {
-      const { data: savedVehicle } = await api.post('/vehicles', currentVehicle.value);
-      const index = vehicles.value.findIndex(v => v.id === newVehicle.id);
-      if (index !== -1) {
-        vehicles.value[index] = savedVehicle;
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Le véhicule n'a pas pu être ajouté.");
-      vehicles.value = vehicles.value.filter(v => v.id !== newVehicle.id);
-    }
-    loadingForm.value = false; // Mettre à false après l'opération
   }
 };
 </script>
