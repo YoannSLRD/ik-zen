@@ -1,4 +1,4 @@
-<!-- frontend/src/views/dashboard/DashboardReasons.vue -->
+<!-- frontend/src/views/dashboard/DashboardReasons.vue (VERSION FINALE) -->
 <template>
   <div>
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -11,7 +11,6 @@
       </div>
     </div>
 
-    <!-- Champ de recherche -->
     <div v-if="reasons.length > 0" class="mb-3">
       <div class="input-group">
         <span class="input-group-text">
@@ -62,7 +61,6 @@
       </div>
     </div>
     
-    <!-- Pagination -->
     <nav v-if="totalPages > 1" aria-label="Page navigation">
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -77,116 +75,71 @@
       </ul>
     </nav>
     
-    <!-- Modale d'ajout/modification -->
-    <div class="modal fade" id="reasonModal" tabindex="-1" aria-labelledby="reasonModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="reasonModalLabel">{{ isEditing ? 'Modifier le motif' : 'Ajouter un motif' }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="handleSubmit">
-              <div class="mb-3">
-                <label for="reasonName" class="form-label">Nom du motif</label>
-                <input id="reasonName" class="form-control" v-model="currentReason.name" required />
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                
-                <!-- ***** BOUTON MIS À JOUR ***** -->
-                <button type="submit" class="btn btn-primary" :disabled="loadingForm">
-                  <span v-if="loadingForm" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  {{ loadingForm ? 'Enregistrement...' : 'Enregistrer' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notre composant de confirmation -->
     <ConfirmModal
       ref="confirmModal"
       title="Confirmer la suppression"
       :message="confirmMessage"
       @confirm="onConfirmDelete"
     />
+
+    <ReasonAddModal ref="reasonAddModal" @reason-added="onReasonAdded" />
+    
+    <ReasonEditModal 
+      v-if="currentReason.id"
+      ref="reasonEditModal"
+      :reason="currentReason"
+      @reason-updated="onReasonUpdated"
+    />
   </div>
 </template>
   
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import api from '@/api'; // <-- MODIFICATION 1: Importer l'instance centralisée
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import api from '@/api';
 import { useToast } from 'vue-toastification';
-import { Modal } from 'bootstrap';
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import ReasonAddModal from '@/components/ReasonAddModal.vue';
+import ReasonEditModal from '@/components/ReasonEditModal.vue';
 
 const toast = useToast();
 const isLoading = ref(true);
 const reasons = ref([]);
-const isEditing = ref(false);
 const currentReason = ref({ id: null, name: '' });
-const loadingForm = ref(false);
 
-// --- LOGIQUE DE RECHERCHE ET PAGINATION ---
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
+const confirmModal = ref(null);
+const reasonToDelete = ref(null);
+const confirmMessage = ref('');
+const reasonEditModal = ref(null);
+const reasonAddModal = ref(null);
+
 const filteredReasons = computed(() => {
-  if (!searchQuery.value) {
-    return reasons.value;
-  }
+  if (!searchQuery.value) return reasons.value;
   const lowerCaseQuery = searchQuery.value.toLowerCase();
   return reasons.value.filter(reason =>
     reason.name.toLowerCase().includes(lowerCaseQuery)
   );
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredReasons.value.length / itemsPerPage.value);
-});
-
+const totalPages = computed(() => Math.ceil(filteredReasons.value.length / itemsPerPage.value));
 const paginatedReasons = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredReasons.value.slice(start, end);
 });
 
-const goToPage = (pageNumber) => {
-  if (pageNumber >= 1 && pageNumber <= totalPages.value) currentPage.value = pageNumber;
-};
+const goToPage = (pageNumber) => { if (pageNumber >= 1 && pageNumber <= totalPages.value) currentPage.value = pageNumber; };
 const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
 
-watch(searchQuery, () => {
-  currentPage.value = 1;
-});
-// --- FIN DE LA LOGIQUE ---
-
-let reasonModal = null;
-const confirmModal = ref(null);
-const confirmMessage = ref('');
-const reasonToDelete = ref(null);
+watch(searchQuery, () => { currentPage.value = 1; });
 
 onMounted(() => {
-  const modalElement = document.getElementById('reasonModal');
-  if (modalElement) {
-    reasonModal = new Modal(modalElement);
-  }
   fetchReasons();
 });
-
-onUnmounted(() => {
-  if (reasonModal) {
-    reasonModal.dispose();
-  }
-});
-
-// MODIFICATION 2: Supprimer la création d'instance axios locale
-// const api = axios.create({ ... }); // <-- SUPPRIMER CETTE LIGNE
 
 const fetchReasons = async () => {
   isLoading.value = true;
@@ -201,100 +154,50 @@ const fetchReasons = async () => {
 };
 
 const openAddModal = () => {
-  isEditing.value = false;
-  currentReason.value = { id: null, name: '' };
-  if (reasonModal) reasonModal.show();
+  reasonAddModal.value?.show();
+};
+
+const onReasonAdded = () => {
+  fetchReasons();
 };
 
 const openEditModal = (reason) => {
-  isEditing.value = true;
   currentReason.value = { ...reason };
-  if (reasonModal) reasonModal.show();
+  nextTick(() => {
+    reasonEditModal.value?.show();
+  });
+};
+
+const onReasonUpdated = (updatedReason) => {
+  const index = reasons.value.findIndex(r => r.id === updatedReason.id);
+  if (index !== -1) {
+    reasons.value[index] = updatedReason;
+  }
 };
 
 const handleDelete = (reason) => {
   reasonToDelete.value = reason;
   confirmMessage.value = `Êtes-vous sûr de vouloir supprimer le motif "${reason.name}" ?`;
-  if (confirmModal.value) {
-    confirmModal.value.show();
-  }
+  confirmModal.value?.show();
 };
 
 const onConfirmDelete = async () => {
   if (!reasonToDelete.value) return;
-
   const reasonToRemove = reasonToDelete.value;
   const originalReasons = [...reasons.value];
-
-  // 1. Mettre à jour l'UI immédiatement
   reasons.value = reasons.value.filter(r => r.id !== reasonToRemove.id);
   
-  // 2. Créer un toast "en attente" et récupérer son ID
-  const toastId = toast.info(
-    `Suppression de "${reasonToRemove.name}"...`,
-    { timeout: false } // Le toast ne disparaîtra pas tout seul
-  );
+  const toastId = toast.info(`Suppression de "${reasonToRemove.name}"...`, { timeout: false });
   
   try {
-    // 3. Envoyer la requête à l'API
     await api.delete(`/reasons/${reasonToRemove.id}`);
-    
-    // 4. Mettre à jour le toast existant en "succès"
-    toast.update(toastId, {
-      content: "Motif supprimé avec succès !",
-      options: {
-        type: 'success',
-        timeout: 4000, // Disparaît après 4 secondes
-      },
-    });
-
+    toast.update(toastId, { content: "Motif supprimé avec succès !", options: { type: 'success', timeout: 4000 } });
   } catch (error) {
-    // 5. En cas d'erreur, mettre à jour le toast en "échec"
-    toast.update(toastId, {
-      content: error.response?.data?.error || "Le motif n'a pas pu être supprimé.",
-      options: {
-        type: 'error',
-        timeout: 6000, // On laisse le message d'erreur plus longtemps
-      },
-    });
-    // Et on restaure la liste
+    toast.update(toastId, { content: error.response?.data?.error || "Le motif n'a pas pu être supprimé.", options: { type: 'error', timeout: 6000 } });
     reasons.value = originalReasons;
   }
   
   reasonToDelete.value = null;
-};
-
-const handleSubmit = async () => {
-  loadingForm.value = true;
-  if (isEditing.value) {
-    try {
-      await api.put(`/reasons/${currentReason.value.id}`, currentReason.value);
-      toast.success("Motif modifié avec succès !");
-      if (reasonModal) reasonModal.hide();
-      fetchReasons(); // On rafraîchit la liste complète après modification
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Erreur lors de la modification.");
-    } finally {
-      loadingForm.value = false;
-    }
-  } else {
-    // Logique optimistic pour l'ajout
-    const newReason = { id: Date.now(), ...currentReason.value };
-    reasons.value.unshift(newReason);
-    if (reasonModal) reasonModal.hide();
-
-    try {
-      const { data: savedReason } = await api.post('/reasons', currentReason.value);
-      const index = reasons.value.findIndex(r => r.id === newReason.id);
-      if (index !== -1) {
-        reasons.value[index] = savedReason;
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Le motif n'a pas pu être ajouté.");
-      reasons.value = reasons.value.filter(r => r.id !== newReason.id);
-    }
-    loadingForm.value = false;
-  }
 };
 </script>
 
