@@ -40,11 +40,11 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// 3. On attend que l'authentification soit prête
-initializeAuth().then(() => {
-  // 4. SEULEMENT ENSUITE, on active le routeur
-  app.use(router)
+// On active le routeur immédiatement
+app.use(router)
 
-  // 5. Et on monte l'application
-  app.mount('#app')
-})
+// On lance l'initialisation de l'auth en arrière-plan
+initializeAuth();
+    
+// On monte l'application SANS ATTENDRE
+app.mount('#app');
