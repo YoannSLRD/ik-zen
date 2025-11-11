@@ -32,6 +32,7 @@ library.add(
 // 1. On crée l'application
 const app = createApp(App)
 
+app.use(router) // On active le routeur tout de suite
 // 2. On configure les plugins qui n'ont pas besoin d'attendre (Toast, FontAwesome)
 app.use(Toast, {
     transition: 'Vue-Toastification__bounce',
@@ -40,11 +41,8 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// 1. On active le routeur IMMÉDIATEMENT
-app.use(router)
-
-// 2. On lance l'initialisation de l'auth en arrière-plan
+// On lance l'initialisation en arrière-plan SANS attendre
 initializeAuth();
     
-// 3. On monte l'application SANS ATTENDRE
+// On monte l'application immédiatement
 app.mount('#app');

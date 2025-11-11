@@ -1,7 +1,9 @@
 <template>
-  <AppLoader v-if="isLoading" />
-
-  <router-view v-slot="{ Component }">
+  <!-- Si l'état d'authentification n'est pas encore connu, on affiche le loader -->
+  <AppLoader v-if="!isAuthReady" />
+  
+  <!-- Sinon, on affiche l'application normalement -->
+  <router-view v-else v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
@@ -10,7 +12,15 @@
 
 <script setup>
 import AppLoader from './components/AppLoader.vue';
-import { isLoading } from './store/loadingStore.js';
+import { authReadyPromise } from './store/userStore.js';
+import { ref } from 'vue';
+
+const isAuthReady = ref(false);
+
+// On attend que la promesse soit résolue pour changer notre état
+authReadyPromise.then(() => {
+  isAuthReady.value = true;
+});
 </script>
 
 <style>

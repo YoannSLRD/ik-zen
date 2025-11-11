@@ -78,8 +78,6 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  // Attend que la promesse d'initialisation de l'auth soit résolue
-  await authReadyPromise;
 
   const isLoggedIn = !!session.value;
   const userRole = user.value?.role;
