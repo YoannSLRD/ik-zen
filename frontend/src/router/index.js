@@ -1,6 +1,7 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { session, user, authReadyPromise } from '@/store/userStore';
+import { session, user } from '@/store/userStore';
+import { isLoading } from '@/store/loadingStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import DashboardLayout from '@/views/dashboard/DashboardLayout.vue';
@@ -16,7 +17,6 @@ import FAQ from '@/views/FAQ.vue';
 import ForgotPassword from '@/views/ForgotPassword.vue';
 import UpdatePassword from '@/views/UpdatePassword.vue';
 import NotFound from '@/views/NotFound.vue';
-import { isLoading } from '@/store/loadingStore';
 
 import DashboardHome from '@/views/dashboard/DashboardHome.vue';
 import DashboardLocations from '@/views/dashboard/DashboardLocations.vue';
@@ -77,8 +77,9 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
-
+// La garde de navigation est maintenant très simple, car elle ne s'exécute
+// que lorsque l'on sait déjà si l'utilisateur est connecté.
+router.beforeEach((to, from, next) => {
   const isLoggedIn = !!session.value;
   const userRole = user.value?.role;
 
@@ -103,7 +104,7 @@ router.beforeEach(async (to, from, next) => {
 });
 
 router.afterEach(() => {
-  // Cache le loader global après chaque navigation réussie
+  // Cache le loader global après chaque navigation
   isLoading.value = false;
 });
 
