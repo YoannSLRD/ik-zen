@@ -1,9 +1,6 @@
 <template>
-  <!-- Si l'état d'authentification n'est pas encore connu, on affiche le loader -->
-  <AppLoader v-if="!isAuthReady" />
-  
-  <!-- Sinon, on affiche l'application normalement -->
-  <router-view v-else v-slot="{ Component }">
+  <!-- Le router-view gère tout l'affichage. On n'a plus besoin du loader ici. -->
+  <router-view v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
@@ -11,18 +8,10 @@
 </template>
 
 <script setup>
-import AppLoader from './components/AppLoader.vue';
-import { authReadyPromise } from './store/userStore.js';
-import { ref } from 'vue';
-
-const isAuthReady = ref(false);
-
-// On attend que la promesse soit résolue pour changer notre état
-authReadyPromise.then(() => {
-  isAuthReady.value = true;
-});
+  // Ce composant est maintenant très simple, il n'a plus besoin de script.
+  // Toute la logique de démarrage est dans main.js et userStore.js.
 </script>
-
+    
 <style>
 body {
   padding-top: 56px;
