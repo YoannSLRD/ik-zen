@@ -160,6 +160,38 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
     }
 });
 
+// --- NOUVELLE ROUTE ADMIN STATS ---
+app.get('/api/admin/stats', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const client = await db.getClient();
+      try {
+        // On exécute les deux requêtes en parallèle pour plus d'efficacité
+        const [totalUsersRes, proUsersRes] = await Promise.all([
+          client.query('SELECT COUNT(id) FROM auth.users'),
+          client.query("SELECT COUNT(id) FROM public.profiles WHERE subscription_status = 'active'")
+        ]);
+  
+        const totalUsers = parseInt(totalUsersRes.rows[0].count, 10);
+        const proUsers = parseInt(proUsersRes.rows[0].count, 10);
+  
+        // On calcule le taux de conversion, en évitant la division par zéro
+        const conversionRate = totalUsers > 0 ? (proUsers / totalUsers) * 100 : 0;
+  
+        res.json({
+          totalUsers,
+          proUsers,
+          conversionRate: parseFloat(conversionRate.toFixed(1)) // On arrondit à une décimale
+        });
+  
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques admin:", error);
+      res.status(500).json({ error: 'Erreur serveur.' });
+    }
+});
+
 app.post('/api/register', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email et mot de passe requis." });
