@@ -40,11 +40,11 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// On active le routeur immédiatement
+// 1. On active le routeur IMMÉDIATEMENT
 app.use(router)
 
-// On lance l'initialisation de l'auth en arrière-plan
+// 2. On lance l'initialisation de l'auth en arrière-plan
 initializeAuth();
     
-// On monte l'application SANS ATTENDRE
+// 3. On monte l'application SANS ATTENDRE
 app.mount('#app');
