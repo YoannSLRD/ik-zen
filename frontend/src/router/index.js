@@ -1,6 +1,6 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { session, user } from '@/store/userStore';
+import { session, user, authReadyPromise } from '@/store/userStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import DashboardLayout from '@/views/dashboard/DashboardLayout.vue';
@@ -77,7 +77,10 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  // Attend que la promesse d'initialisation de l'auth soit résolue
+  await authReadyPromise;
+
   const isLoggedIn = !!session.value;
   const userRole = user.value?.role;
 
@@ -89,9 +92,8 @@ router.beforeEach((to, from, next) => {
     if (requiresGuest) {
       return next('/dashboard');
     }
-    // NOUVELLE VÉRIFICATION : Si la route demande un admin mais que l'utilisateur n'en est pas un
     if (requiresAdmin && userRole !== 'admin') {
-      return next('/dashboard'); // On le redirige vers son tableau de bord
+      return next('/dashboard');
     }
     return next();
   } else {

@@ -3,6 +3,12 @@
 import { ref } from 'vue'
 import { supabase } from '@/supabaseClient'
 
+// On crée une promesse qui attend d'être "résolue"
+let resolveAuthReady;
+export const authReadyPromise = new Promise(resolve => {
+  resolveAuthReady = resolve;
+});
+
 // La variable 'user' contient les informations du profil public de l'utilisateur.
 // Elle est initialisée à null.
 export const user = ref(null)
@@ -38,14 +44,18 @@ supabase.auth.onAuthStateChange(async (_event, newSession) => {
   session.value = newSession
 
   if (newSession) {
-    // Si une nouvelle session est active (connexion, rafraîchissement),
-    // on récupère le profil utilisateur associé.
     await fetchUserProfile(newSession.user.id)
   } else {
-    // Si la session est nulle (déconnexion), on vide les informations utilisateur.
     user.value = null
   }
-})
+
+  // --- AJOUTE CETTE CONDITION ---
+  // Si le "signal" existe et que l'événement est INITIAL_SESSION, on le déclenche
+  if (resolveAuthReady && (_event === 'INITIAL_SESSION' || _event === 'SIGNED_IN' || _event === 'SIGNED_OUT')) {
+    resolveAuthReady();
+    resolveAuthReady = null; // On s'assure de ne le déclencher qu'une fois
+  }
+});
 
 /**
  * Vérifie la session utilisateur au démarrage de l'application.
