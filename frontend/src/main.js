@@ -41,8 +41,5 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-// On lance l'initialisation en arrière-plan SANS attendre
-initializeAuth();
-    
 // On monte l'application immédiatement
 app.mount('#app');

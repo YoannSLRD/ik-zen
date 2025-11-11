@@ -56,14 +56,3 @@ supabase.auth.onAuthStateChange(async (_event, newSession) => {
     resolveAuthReady = null; // On s'assure de ne le déclencher qu'une fois
   }
 });
-
-/**
- * Vérifie la session utilisateur au démarrage de l'application.
- */
-export const initializeAuth = async () => {
-  const { data } = await supabase.auth.getSession()
-  session.value = data.session
-  if (data.session) {
-    await fetchUserProfile(data.session.user.id)
-  }
-}
