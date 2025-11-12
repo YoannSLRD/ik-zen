@@ -35,6 +35,16 @@
         </div>
     </div>
 
+    <!-- NOUVEAU : Champ de recherche -->
+    <div class="mb-3">
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="Rechercher par e-mail ou nom..." 
+        v-model="searchQuery"
+      >
+    </div>
+
     <!-- SECTION 3 : La Table des Utilisateurs -->
     <div v-if="isLoading" class="loading-indicator">Chargement des utilisateurs...</div>
     <div v-else-if="users.length > 0" class="table-responsive">
@@ -112,6 +122,7 @@
     const sortOrder = ref('desc'); // Ordre de tri par défaut (descendant)
 
     const impersonatingUserId = ref(null);
+    const searchQuery = ref('');
 
     const impersonate = async (targetUser) => {
       if (!confirm(`ATTENTION : Vous allez vous déconnecter de votre compte admin et vous connecter en tant que ${targetUser.email}. Voulez-vous continuer ?`)) {
@@ -136,22 +147,29 @@
     };
 
     const sortedUsers = computed(() => {
-      return [...users.value].sort((a, b) => {
+      // Étape 1: Filtrage par la recherche
+      let filtered = users.value;
+      if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = users.value.filter(user => 
+          user.email.toLowerCase().includes(query) ||
+          (user.first_name && user.first_name.toLowerCase().includes(query)) ||
+          (user.last_name && user.last_name.toLowerCase().includes(query))
+        );
+      }
+
+      // Étape 2: Tri des résultats filtrés
+      return [...filtered].sort((a, b) => {
         let valA = a[sortKey.value];
         let valB = b[sortKey.value];
 
-        // Gère les dates (qui sont des chaînes de caractères)
         if (sortKey.value === 'created_at' || sortKey.value === 'last_sign_in_at') {
           valA = valA ? new Date(valA).getTime() : 0;
           valB = valB ? new Date(valB).getTime() : 0;
         }
 
-        if (valA < valB) {
-          return sortOrder.value === 'asc' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortOrder.value === 'asc' ? 1 : -1;
-        }
+        if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
         return 0;
       });
     });
