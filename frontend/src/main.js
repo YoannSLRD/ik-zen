@@ -3,7 +3,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import { onAuthReady } from '@/store/userStore' // <-- On importe notre "porte d'entrée"
 
 // Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -27,19 +26,16 @@ library.add(
     faRoute, faPlusCircle, faCog, faSignOutAlt, faTachometerAlt, faFileInvoice, faMapSigns, faFilePdf, faStar, faSearch, faEuroSign, faTableList, faUserShield
 )
 
-// 1. On crée l'application
 const app = createApp(App)
-
-// 2. On configure les plugins qui n'ont pas besoin d'attendre
+  
+app.use(router) // On active le routeur tout de suite
 app.use(Toast, {
     transition: 'Vue-Toastification__bounce',
     maxToasts: 5,
     newestOnTop: true
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
-
-// 3. On attend que l'authentification soit prête pour lancer l'application
-onAuthReady(() => {
-  app.use(router) // Le routeur est activé SEULEMENT maintenant
-  app.mount('#app') // L'application est montée SEULEMENT maintenant
-})
+    
+// On monte l'application immédiatement SANS attendre.
+// Le loader dans App.vue gérera l'attente visuelle.
+app.mount('#app');

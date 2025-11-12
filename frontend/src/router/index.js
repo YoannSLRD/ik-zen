@@ -1,6 +1,6 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { session, user } from '@/store/userStore';
+import { session, user, authReadyPromise } from '@/store/userStore';
 import { isLoading } from '@/store/loadingStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
@@ -77,9 +77,11 @@ const router = createRouter({
   routes
 });
 
-// La garde de navigation est maintenant très simple, car elle ne s'exécute
-// que lorsque l'on sait déjà si l'utilisateur est connecté.
-router.beforeEach((to, from, next) => {
+// La garde de navigation ATTEND que l'authentification soit prête
+router.beforeEach(async (to, from, next) => {
+  // Cette ligne est CRUCIALE : elle met en pause le routeur
+  await authReadyPromise;
+
   const isLoggedIn = !!session.value;
   const userRole = user.value?.role;
 

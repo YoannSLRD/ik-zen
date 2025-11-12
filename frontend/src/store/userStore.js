@@ -3,36 +3,14 @@
 import { ref } from 'vue'
 import { supabase } from '@/supabaseClient'
 
+// On crée une promesse qui sera résolue une seule fois, au démarrage
+let resolveAuthReady;
+export const authReadyPromise = new Promise(resolve => {
+  resolveAuthReady = resolve;
+});
+
 export const user = ref(null)
 export const session = ref(null)
-
-// On crée une fonction "porte d'entrée" qui sera appelée une seule fois
-let appInitialized = false;
-
-export const onAuthReady = (callback) => {
-  // Si l'app est déjà prête, on exécute le callback immédiatement
-  if (appInitialized) {
-    callback();
-    return;
-  }
-
-  // C'est le listener officiel de Supabase qui nous donnera le signal de départ
-  supabase.auth.onAuthStateChange(async (_event, newSession) => {
-    session.value = newSession
-    if (newSession) {
-      // Si une session existe, on récupère le profil utilisateur
-      await fetchUserProfile(newSession.user.id)
-    } else {
-      user.value = null
-    }
-
-    // Le plus important : au premier signal reçu, on démarre l'application
-    if (!appInitialized) {
-      appInitialized = true;
-      callback(); // C'est ici qu'on lancera app.mount() depuis main.js
-    }
-  });
-};
 
 export const fetchUserProfile = async (userId) => {
   const token = session.value?.access_token
@@ -50,3 +28,20 @@ export const fetchUserProfile = async (userId) => {
     user.value = null
   }
 }
+
+// C'est le listener de Supabase qui est notre unique source de vérité.
+// Il est appelé automatiquement au démarrage de l'app.
+supabase.auth.onAuthStateChange(async (_event, newSession) => {
+  session.value = newSession
+  if (newSession) {
+    await fetchUserProfile(newSession.user.id)
+  } else {
+    user.value = null
+  }
+  
+  // Au premier événement reçu, on résout la promesse pour débloquer l'app.
+  if (resolveAuthReady) {
+    resolveAuthReady();
+    resolveAuthReady = null; // Pour ne pas la résoudre à nouveau
+  }
+});
