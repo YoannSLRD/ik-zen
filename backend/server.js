@@ -193,6 +193,31 @@ app.get('/api/admin/stats', authenticateToken, isAdmin, async (req, res) => {
     }
 });
 
+// --- NOUVELLE ROUTE POUR L'IMPERSONATION ---
+app.post('/api/admin/impersonate/:userId', authenticateToken, isAdmin, async (req, res) => {
+    const { userId } = req.params;
+  
+    try {
+      // On utilise l'API Admin de Supabase pour générer un "magic link"
+      const { data, error } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: (await supabase.auth.admin.getUserById(userId)).data.user.email,
+        options: {
+          redirectTo: `${process.env.FRONTEND_URL}/dashboard` // Redirige vers le dashboard après connexion
+        }
+      });
+  
+      if (error) throw error;
+  
+      // On renvoie le lien complet au frontend
+      res.json({ magicLink: data.properties.action_link });
+  
+    } catch (error) {
+      console.error(`Erreur lors de la génération du lien magique pour l'utilisateur ${userId}:`, error);
+      res.status(500).json({ error: 'Impossible de générer le lien de connexion.' });
+    }
+});
+
 app.post('/api/register', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email et mot de passe requis." });

@@ -58,6 +58,7 @@
               <font-awesome-icon v-if="sortKey === 'last_sign_in_at'" :icon="sortOrder === 'asc' ? 'sort-up' : 'sort-down'" />
               <font-awesome-icon v-else icon="sort" class="text-muted" />
             </th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -71,6 +72,16 @@
               </span>
             </td>
             <td>{{ formatRelativeDate(user.last_sign_in_at) }}</td>
+            <td class="text-center">
+              <button 
+                @click="impersonate(user)" 
+                class="btn btn-outline-warning btn-sm" 
+                title="Se connecter en tant que cet utilisateur"
+                :disabled="impersonatingUserId === user.id">
+                  <span v-if="impersonatingUserId === user.id" class="spinner-border spinner-border-sm"></span>
+                  <font-awesome-icon v-else icon="fa-solid fa-user-secret" />
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -87,6 +98,7 @@
     import { ref, onMounted, computed } from 'vue';
     import api from '@/api';
     import { useToast } from 'vue-toastification';
+    import { supabase } from '@/supabaseClient';
 
     const isLoading = ref(true);
     const users = ref([]);
@@ -98,6 +110,30 @@
 
     const sortKey = ref('created_at'); // Colonne de tri par défaut
     const sortOrder = ref('desc'); // Ordre de tri par défaut (descendant)
+
+    const impersonatingUserId = ref(null);
+
+    const impersonate = async (targetUser) => {
+      if (!confirm(`ATTENTION : Vous allez vous déconnecter de votre compte admin et vous connecter en tant que ${targetUser.email}. Voulez-vous continuer ?`)) {
+        return;
+      }
+
+      impersonatingUserId.value = targetUser.id;
+      try {
+        const { data } = await api.post(`/api/admin/impersonate/${targetUser.id}`);
+        
+        // D'abord, on déconnecte l'admin localement
+        await supabase.auth.signOut(); 
+        
+        // Ensuite, on redirige vers le lien magique qui va nous connecter en tant que l'utilisateur
+        window.location.href = data.magicLink;
+
+      } catch (error) {
+        toast.error("Impossible de générer le lien de connexion.");
+      } finally {
+        impersonatingUserId.value = null;
+      }
+    };
 
     const sortedUsers = computed(() => {
       return [...users.value].sort((a, b) => {
