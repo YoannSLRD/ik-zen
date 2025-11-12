@@ -41,15 +41,27 @@
       <table class="table table-striped table-hover">
         <thead>
           <tr>
-            <th>Email</th>
-            <th>Nom</th>
-            <th>Inscrit le</th>
+            <th @click="sortBy('email')" class="sortable">
+              Email
+              <font-awesome-icon v-if="sortKey === 'email'" :icon="sortOrder === 'asc' ? 'sort-up' : 'sort-down'" />
+              <font-awesome-icon v-else icon="sort" class="text-muted" />
+            </th>
+            <th>Nom</th> <!-- On ne trie pas par nom pour l'instant -->
+            <th @click="sortBy('created_at')" class="sortable">
+              Inscrit le
+              <font-awesome-icon v-if="sortKey === 'created_at'" :icon="sortOrder === 'asc' ? 'sort-up' : 'sort-down'" />
+              <font-awesome-icon v-else icon="sort" class="text-muted" />
+            </th>
             <th>Statut Abonnement</th>
-            <th>Dernière Connexion</th> 
+            <th @click="sortBy('last_sign_in_at')" class="sortable">
+              Dernière Connexion
+              <font-awesome-icon v-if="sortKey === 'last_sign_in_at'" :icon="sortOrder === 'asc' ? 'sort-up' : 'sort-down'" />
+              <font-awesome-icon v-else icon="sort" class="text-muted" />
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id">
+          <tr v-for="user in sortedUsers" :key="user.id">
             <td>{{ user.email }}</td>
             <td>{{ user.first_name || '-' }} {{ user.last_name || '' }}</td>
             <td>{{ new Date(user.created_at).toLocaleDateString('fr-FR') }}</td>
@@ -72,7 +84,7 @@
 </template>
   
   <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, computed } from 'vue';
     import api from '@/api';
     import { useToast } from 'vue-toastification';
 
@@ -83,6 +95,41 @@
     // === AJOUTE CES LIGNES ===
     const stats = ref(null);
     const isLoadingStats = ref(true);
+
+    const sortKey = ref('created_at'); // Colonne de tri par défaut
+    const sortOrder = ref('desc'); // Ordre de tri par défaut (descendant)
+
+    const sortedUsers = computed(() => {
+      return [...users.value].sort((a, b) => {
+        let valA = a[sortKey.value];
+        let valB = b[sortKey.value];
+
+        // Gère les dates (qui sont des chaînes de caractères)
+        if (sortKey.value === 'created_at' || sortKey.value === 'last_sign_in_at') {
+          valA = valA ? new Date(valA).getTime() : 0;
+          valB = valB ? new Date(valB).getTime() : 0;
+        }
+
+        if (valA < valB) {
+          return sortOrder.value === 'asc' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortOrder.value === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    });
+
+    const sortBy = (key) => {
+      if (sortKey.value === key) {
+        // Si on clique sur la même colonne, on inverse l'ordre
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+      } else {
+        // Si on clique sur une nouvelle colonne, on trie par défaut en descendant
+        sortKey.value = key;
+        sortOrder.value = 'desc';
+      }
+    };
 
     const fetchAdminData = async () => {
       isLoading.value = true;
@@ -143,4 +190,16 @@
     font-size: 1.2rem;
     color: var(--bs-secondary-color);
   }
-  </style>
+
+  .sortable {
+  cursor: pointer;
+}
+.sortable:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* En mode sombre */
+html[data-theme='dark'] .sortable:hover {
+  background-color: rgba(255,255,255,0.05);
+}
+</style>
