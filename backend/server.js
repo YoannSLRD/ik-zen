@@ -198,22 +198,32 @@ app.post('/api/admin/impersonate/:userId', authenticateToken, isAdmin, async (re
     const { userId } = req.params;
   
     try {
-      // On utilise l'API Admin de Supabase pour générer un "magic link"
-      const { data, error } = await supabase.auth.admin.generateLink({
+      // Étape 1 : Récupérer les informations de l'utilisateur de manière sécurisée
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+  
+      if (userError || !userData?.user?.email) {
+        console.error(`Utilisateur non trouvé ou email manquant pour l'ID: ${userId}`, userError);
+        throw new Error('Utilisateur cible invalide.');
+      }
+  
+      const targetEmail = userData.user.email;
+  
+      // Étape 2 : Générer le lien magique
+      const { data, error: linkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: (await supabase.auth.admin.getUserById(userId)).data.user.email,
+        email: targetEmail,
         options: {
-          redirectTo: `${process.env.FRONTEND_URL}/dashboard` // Redirige vers le dashboard après connexion
+          redirectTo: `${process.env.FRONTEND_URL}/dashboard`
         }
       });
   
-      if (error) throw error;
+      if (linkError) throw linkError;
   
-      // On renvoie le lien complet au frontend
+      // Étape 3 : Renvoyer le lien au frontend
       res.json({ magicLink: data.properties.action_link });
   
     } catch (error) {
-      console.error(`Erreur lors de la génération du lien magique pour l'utilisateur ${userId}:`, error);
+      console.error(`Erreur lors de la génération du lien magique pour l'utilisateur ${userId}:`, error.message);
       res.status(500).json({ error: 'Impossible de générer le lien de connexion.' });
     }
 });
