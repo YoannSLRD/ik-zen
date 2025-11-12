@@ -146,6 +146,7 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
           u.id, 
           u.email, 
           u.created_at,
+          u.last_sign_in_at,
           p.first_name,
           p.last_name,
           p.subscription_status

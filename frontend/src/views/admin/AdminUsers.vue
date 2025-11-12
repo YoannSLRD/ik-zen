@@ -45,6 +45,7 @@
             <th>Nom</th>
             <th>Inscrit le</th>
             <th>Statut Abonnement</th>
+            <th>Dernière Connexion</th> 
           </tr>
         </thead>
         <tbody>
@@ -57,6 +58,7 @@
                 {{ user.subscription_status || 'N/A' }}
               </span>
             </td>
+            <td>{{ formatRelativeDate(user.last_sign_in_at) }}</td>
           </tr>
         </tbody>
       </table>
@@ -100,6 +102,33 @@
         isLoading.value = false;
         isLoadingStats.value = false;
       }
+    };
+
+    const formatRelativeDate = (dateString) => {
+      if (!dateString) return 'Jamais';
+      
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.round((now - date) / 1000);
+      
+      const units = [
+        { name: 'an', seconds: 31536000 },
+        { name: 'mois', seconds: 2592000 },
+        { name: 'jour', seconds: 86400 },
+        { name: 'heure', seconds: 3600 },
+        { name: 'minute', seconds: 60 },
+      ];
+
+      for (const unit of units) {
+        const interval = diffInSeconds / unit.seconds;
+        if (interval > 1) {
+          const value = Math.floor(interval);
+          // Gère le pluriel
+          const plural = (unit.name === 'mois') ? '' : 's';
+          return `il y a ${value} ${unit.name}${value > 1 ? plural : ''}`;
+        }
+      }
+      return 'à l\'instant';
     };
 
     onMounted(() => {
