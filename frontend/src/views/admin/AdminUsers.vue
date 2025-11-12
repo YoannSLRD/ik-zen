@@ -147,16 +147,25 @@
     };
 
     const sortedUsers = computed(() => {
-      // Étape 1: Filtrage par la recherche
       let filtered = users.value;
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
+        
+        // On divise la recherche en plusieurs mots-clés
+        const searchTerms = query.split(' ').filter(term => term.length > 0);
+
         filtered = users.value.filter(user => {
-            // On construit le nom complet pour une recherche plus intuitive
-            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
-            
-            return user.email.toLowerCase().includes(query) ||
-                   fullName.includes(query);
+          const email = user.email.toLowerCase();
+          const firstName = (user.first_name || '').toLowerCase();
+          const lastName = (user.last_name || '').toLowerCase();
+
+          // L'utilisateur est gardé si TOUS les mots-clés de la recherche 
+          // sont trouvés quelque part dans l'e-mail, le prénom ou le nom.
+          return searchTerms.every(term => 
+            email.includes(term) ||
+            firstName.includes(term) ||
+            lastName.includes(term)
+          );
         });
       }
 
