@@ -13,21 +13,44 @@ export const user = ref(null)
 export const session = ref(null)
 
 export const fetchUserProfile = async (userId) => {
-  const token = session.value?.access_token
-  if (!token) return
+  const token = session.value?.access_token;
+  if (!token) return;
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (!response.ok) throw new Error("Could not fetch user profile.")
-    const profile = await response.json()
-    user.value = profile
-  } catch (error) {
-    console.error("Error fetching profile:", error)
-    user.value = null
+  // --- NOUVELLE LOGIQUE DE RÉESSAI ---
+  const maxRetries = 3;
+  const retryDelay = 3000; // 3 secondes
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.status === 503) { // 503 Service Unavailable, le serveur se réveille
+        throw new Error("Server is waking up");
+      }
+      
+      if (!response.ok) {
+        throw new Error("Could not fetch user profile.");
+      }
+
+      const profile = await response.json();
+      user.value = profile;
+      return; // Succès, on sort de la fonction
+
+    } catch (error) {
+      console.warn(`Attempt ${i + 1} to fetch profile failed:`, error.message);
+      if (i < maxRetries - 1) {
+        // On attend avant de réessayer
+        await new Promise(res => setTimeout(res, retryDelay));
+      } else {
+        // C'est le dernier essai, on affiche l'erreur finale
+        console.error("Error fetching profile after multiple retries:", error);
+        user.value = null; // En cas d'échec final, on réinitialise.
+      }
+    }
   }
-}
+};
 
 // C'est le listener de Supabase qui est notre unique source de vérité.
 // Il est appelé automatiquement au démarrage de l'app.
