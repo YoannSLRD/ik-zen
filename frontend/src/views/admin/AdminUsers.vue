@@ -151,11 +151,13 @@
       let filtered = users.value;
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = users.value.filter(user => 
-          user.email.toLowerCase().includes(query) ||
-          (user.first_name && user.first_name.toLowerCase().includes(query)) ||
-          (user.last_name && user.last_name.toLowerCase().includes(query))
-        );
+        filtered = users.value.filter(user => {
+            // On construit le nom complet pour une recherche plus intuitive
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+            
+            return user.email.toLowerCase().includes(query) ||
+                   fullName.includes(query);
+        });
       }
 
       // Étape 2: Tri des résultats filtrés
