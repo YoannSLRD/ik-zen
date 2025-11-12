@@ -120,7 +120,7 @@
 
       impersonatingUserId.value = targetUser.id;
       try {
-        const { data } = await api.post(`/api/admin/impersonate/${targetUser.id}`);
+        const { data } = await api.post(`/admin/impersonate/${targetUser.id}`);
         
         // D'abord, on déconnecte l'admin localement
         await supabase.auth.signOut(); 
