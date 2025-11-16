@@ -35,6 +35,19 @@
         </div>
     </div>
 
+    <!-- NOUVELLE SECTION : GRAPHIQUE -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Évolution des inscriptions (30 derniers jours)</h5>
+      </div>
+      <div class="card-body">
+        <div v-if="isLoadingGrowth" class="loading-indicator">Chargement du graphique...</div>
+        <div v-else-if="growthData" style="height: 300px;">
+          <Line :data="growthData" :options="{ responsive: true, maintainAspectRatio: false }" />
+        </div>
+      </div>
+    </div>
+
     <!-- NOUVEAU : Champ de recherche -->
     <div class="mb-3">
       <input 
@@ -109,6 +122,11 @@
     import api from '@/api';
     import { useToast } from 'vue-toastification';
     import { supabase } from '@/supabaseClient';
+    import { Line } from 'vue-chartjs';
+    import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
+
+    // On enregistre les éléments nécessaires pour un graphique en lignes
+    ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
 
     const isLoading = ref(true);
     const users = ref([]);
@@ -117,6 +135,8 @@
     // === AJOUTE CES LIGNES ===
     const stats = ref(null);
     const isLoadingStats = ref(true);
+    const growthData = ref(null); 
+    const isLoadingGrowth = ref(true);
 
     const sortKey = ref('created_at'); // Colonne de tri par défaut
     const sortOrder = ref('desc'); // Ordre de tri par défaut (descendant)
@@ -197,22 +217,38 @@
     };
 
     const fetchAdminData = async () => {
+      // On met les 3 isLoading à true
       isLoading.value = true;
       isLoadingStats.value = true;
+      isLoadingGrowth.value = true;
       try {
-        // On lance les deux requêtes en parallèle
-        const [usersResponse, statsResponse] = await Promise.all([
+        // On lance les 3 requêtes en parallèle
+        const [usersResponse, statsResponse, growthResponse] = await Promise.all([
           api.get('/admin/users'),
-          api.get('/admin/stats')
+          api.get('/admin/stats'),
+          api.get('/admin/stats/growth') // <-- NOUVEL APPEL API
         ]);
         users.value = usersResponse.data;
         stats.value = statsResponse.data;
+        growthData.value = { // <-- On prépare les données pour le composant graphique
+            labels: growthResponse.data.labels,
+            datasets: [
+                {
+                    label: 'Nouveaux Utilisateurs',
+                    backgroundColor: '#00334E',
+                    borderColor: '#66DDAA',
+                    data: growthResponse.data.data,
+                    tension: 0.1
+                }
+            ]
+        };
       } catch (error) {
         toast.error("Impossible de charger les données d'administration.");
         console.error("Erreur API Admin:", error);
       } finally {
         isLoading.value = false;
         isLoadingStats.value = false;
+        isLoadingGrowth.value = false; // <-- On met à jour le nouveau isLoading
       }
     };
 

@@ -228,6 +228,40 @@ app.post('/api/admin/impersonate/:userId', authenticateToken, isAdmin, async (re
     }
 });
 
+// --- NOUVELLE ROUTE ADMIN POUR LE GRAPHIQUE DE CROISSANCE ---
+app.get('/api/admin/stats/growth', authenticateToken, isAdmin, async (req, res) => {
+    try {
+      const { rows } = await db.query(`
+        -- On génère une série de dates pour les 30 derniers jours
+        WITH days AS (
+          SELECT generate_series(
+            (NOW() - INTERVAL '29 days')::date,
+            NOW()::date,
+            '1 day'::interval
+          )::date AS day
+        )
+        -- On compte les utilisateurs pour chaque jour
+        SELECT
+          d.day,
+          COUNT(u.id) AS new_users
+        FROM days d
+        LEFT JOIN auth.users u ON d.day = u.created_at::date
+        GROUP BY d.day
+        ORDER BY d.day ASC;
+      `);
+  
+      // On formate les données pour Chart.js
+      const labels = rows.map(row => new Date(row.day).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+      const data = rows.map(row => parseInt(row.new_users, 10));
+  
+      res.json({ labels, data });
+  
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données de croissance:", error);
+      res.status(500).json({ error: 'Erreur serveur.' });
+    }
+});
+
 app.post('/api/register', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email et mot de passe requis." });
