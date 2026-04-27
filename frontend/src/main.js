@@ -1,6 +1,6 @@
 // frontend/src/main.js
-
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -27,8 +27,10 @@ library.add(
 )
 
 const app = createApp(App)
-  
-app.use(router) // On active le routeur tout de suite
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router) 
 app.use(Toast, {
     transition: 'Vue-Toastification__bounce',
     maxToasts: 5,
@@ -36,6 +38,4 @@ app.use(Toast, {
 })
 app.component('font-awesome-icon', FontAwesomeIcon)
     
-// On monte l'application immédiatement SANS attendre.
-// Le loader dans App.vue gérera l'attente visuelle.
 app.mount('#app');

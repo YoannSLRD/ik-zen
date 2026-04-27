@@ -1,14 +1,12 @@
 <!-- frontend/src/App.vue -->
 <template>
-  <!-- Si l'authentification n'est pas encore prête, on affiche notre loader -->
-  <div v-if="!isAuthReady" class="loader-overlay">
+  <div v-if="!userStore.isAuthReady" class="loader-overlay">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Chargement...</span>
     </div>
     <p class="mt-3 text-muted">Préparation de votre espace...</p>
   </div>
   
-  <!-- Une fois prête, on affiche l'application -->
   <router-view v-else v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
@@ -17,15 +15,10 @@
 </template>
 
 <script setup>
-import { authReadyPromise } from './store/userStore.js';
-import { ref } from 'vue';
+import { useUserStore } from '@/store/userStore';
 
-const isAuthReady = ref(false);
-
-// On attend que la promesse soit résolue pour changer notre état local
-authReadyPromise.then(() => {
-  isAuthReady.value = true;
-});
+const userStore = useUserStore();
+userStore.initAuthListener(); // On lance l'écouteur ici
 </script>
     
 <style>
@@ -33,7 +26,6 @@ body {
   padding-top: 56px;
 }
 
-/* Styles pour la transition de page */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -50,7 +42,7 @@ body {
 }
 
 .navbar-brand img {
-  height: 40px; /* On fixe la hauteur ici, c'est plus propre */
+  height: 40px; 
 }
 
 .loader-overlay {

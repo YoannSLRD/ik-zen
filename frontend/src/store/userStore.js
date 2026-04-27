@@ -1,70 +1,73 @@
 // frontend/src/store/userStore.js
-
-import { ref } from 'vue'
+import { defineStore } from 'pinia'
 import { supabase } from '@/supabaseClient'
 
-// On crée une promesse qui sera résolue une seule fois, au démarrage
-let resolveAuthReady;
-export const authReadyPromise = new Promise(resolve => {
-  resolveAuthReady = resolve;
-});
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    user: null,
+    session: null,
+    isAuthReady: false,
+  }),
 
-export const user = ref(null)
-export const session = ref(null)
+  actions: {
+    async fetchUserProfile(userId) {
+      const token = this.session?.access_token;
+      if (!token) return;
 
-export const fetchUserProfile = async (userId) => {
-  const token = session.value?.access_token;
-  if (!token) return;
+      const maxRetries = 3;
+      const retryDelay = 3000;
 
-  // --- NOUVELLE LOGIQUE DE RÉESSAI ---
-  const maxRetries = 3;
-  const retryDelay = 3000; // 3 secondes
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
 
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+          if (response.status === 503) {
+            throw new Error("Server is waking up");
+          }
+          
+          if (!response.ok) {
+            throw new Error("Could not fetch user profile.");
+          }
+
+          const profile = await response.json();
+          this.user = profile;
+          return;
+
+        } catch (error) {
+          console.warn(`Attempt ${i + 1} to fetch profile failed:`, error.message);
+          if (i < maxRetries - 1) {
+            await new Promise(res => setTimeout(res, retryDelay));
+          } else {
+            console.error("Error fetching profile after multiple retries:", error);
+            this.user = null;
+          }
+        }
+      }
+    },
+
+    initAuthListener() {
+      return new Promise((resolve) => {
+        supabase.auth.onAuthStateChange(async (_event, newSession) => {
+          this.session = newSession;
+          
+          if (newSession) {
+            await this.fetchUserProfile(newSession.user.id);
+          } else {
+            this.user = null;
+          }
+          
+          this.isAuthReady = true;
+          resolve(); 
+        });
       });
+    },
 
-      if (response.status === 503) { // 503 Service Unavailable, le serveur se réveille
-        throw new Error("Server is waking up");
-      }
-      
-      if (!response.ok) {
-        throw new Error("Could not fetch user profile.");
-      }
-
-      const profile = await response.json();
-      user.value = profile;
-      return; // Succès, on sort de la fonction
-
-    } catch (error) {
-      console.warn(`Attempt ${i + 1} to fetch profile failed:`, error.message);
-      if (i < maxRetries - 1) {
-        // On attend avant de réessayer
-        await new Promise(res => setTimeout(res, retryDelay));
-      } else {
-        // C'est le dernier essai, on affiche l'erreur finale
-        console.error("Error fetching profile after multiple retries:", error);
-        user.value = null; // En cas d'échec final, on réinitialise.
-      }
+    async logout() {
+      await supabase.auth.signOut();
+      this.user = null;
+      this.session = null;
     }
   }
-};
-
-// C'est le listener de Supabase qui est notre unique source de vérité.
-// Il est appelé automatiquement au démarrage de l'app.
-supabase.auth.onAuthStateChange(async (_event, newSession) => {
-  session.value = newSession
-  if (newSession) {
-    await fetchUserProfile(newSession.user.id)
-  } else {
-    user.value = null
-  }
-  
-  // Au premier événement reçu, on résout la promesse pour débloquer l'app.
-  if (resolveAuthReady) {
-    resolveAuthReady();
-    resolveAuthReady = null; // Pour ne pas la résoudre à nouveau
-  }
-});
+})

@@ -164,8 +164,13 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Offcanvas } from 'bootstrap';
 import { supabase } from '@/supabaseClient.js';
-import { user } from '@/store/userStore.js';
 import ProfileCompletionModal from '@/components/ProfileCompletionModal.vue';
+
+import { useUserStore } from '@/store/userStore';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
 const router = useRouter();
 let sidebarOffcanvas = null;

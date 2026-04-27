@@ -320,7 +320,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import api from '@/api';
-import { user } from '@/store/userStore';
 import { useToast } from 'vue-toastification';
 import { Modal } from 'bootstrap';
 import ConfirmModal from '@/components/ConfirmModal.vue';
@@ -329,6 +328,12 @@ import 'tom-select/dist/css/tom-select.bootstrap5.css';
 import LocationAddModal from '@/components/LocationAddModal.vue';
 import VehicleAddModal from '@/components/VehicleAddModal.vue';
 import ReasonAddModal from '@/components/ReasonAddModal.vue';
+
+import { useUserStore } from '@/store/userStore';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
 // --- INITIALISATION DES VARIABLES ---
 const toast = useToast();

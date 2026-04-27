@@ -71,13 +71,17 @@
 </template>
 
 <script setup>
-// Le script que tu as déjà est parfait, aucune modification nécessaire
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Footer from '@/components/Footer.vue';
 import CookieBanner from '@/components/CookieBanner.vue';
 import { supabase } from '@/supabaseClient';
-import { session } from '@/store/userStore';
+
+import { useUserStore } from '@/store/userStore';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { session } = storeToRefs(userStore);
 
 const router = useRouter();
 const isLoggedIn = computed(() => !!session.value);

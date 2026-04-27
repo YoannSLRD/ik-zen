@@ -169,12 +169,17 @@
 
 <script setup>
 import { ref, watch} from 'vue';
-import api from '@/api'; // <-- MODIFICATION 1: Importer l'instance centralisée
+import api from '@/api'; 
 import { supabase } from '@/supabaseClient.js';
-import { user } from '@/store/userStore'; // <-- MODIFICATION 2: Importer l'utilisateur du store
 import { useToast } from 'vue-toastification';
 import ConfirmModal from '@/components/ConfirmModal.vue';
 import Papa from 'papaparse';
+
+import { useUserStore } from '@/store/userStore';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
 const toast = useToast();
 const isLoading = ref(false); // Pas besoin de isLoading, le user est déjà dans le store

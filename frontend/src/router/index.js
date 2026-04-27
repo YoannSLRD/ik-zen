@@ -1,11 +1,12 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import { session, user, authReadyPromise } from '@/store/userStore';
+import { useUserStore } from '@/store/userStore'; // <-- MODIFIÉ
 import { isLoading } from '@/store/loadingStore';
 
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import DashboardLayout from '@/views/dashboard/DashboardLayout.vue';
 
+// ... (Garde tous tes imports de vues comme Home, Login, etc. ici) ...
 import Home from '@/views/Home.vue';
 import Login from '@/views/Login.vue';
 import Register from '@/views/Register.vue';
@@ -77,13 +78,16 @@ const router = createRouter({
   routes
 });
 
-// La garde de navigation ATTEND que l'authentification soit prête
 router.beforeEach(async (to, from, next) => {
-  // Cette ligne est CRUCIALE : elle met en pause le routeur
-  await authReadyPromise;
+  const userStore = useUserStore();
 
-  const isLoggedIn = !!session.value;
-  const userRole = user.value?.role;
+  // On attend que l'auth soit prête
+  if (!userStore.isAuthReady) {
+    await userStore.initAuthListener();
+  }
+
+  const isLoggedIn = !!userStore.session;
+  const userRole = userStore.user?.role;
 
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
@@ -106,7 +110,6 @@ router.beforeEach(async (to, from, next) => {
 });
 
 router.afterEach(() => {
-  // Cache le loader global après chaque navigation
   isLoading.value = false;
 });
 

@@ -19,6 +19,7 @@
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.3",
     "papaparse": "^5.4.1",
+    "pinia": "^3.0.4",
     "tom-select": "^2.3.1",
     "vue": "^3.4.31",
     "vue-chartjs": "^5.3.1",

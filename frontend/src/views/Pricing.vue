@@ -71,21 +71,25 @@
 </template>
   
     
-  <script setup>
+<script setup>
   import { ref, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import { useToast } from 'vue-toastification';
-  import api from '@/api.js'; // Utiliser l'instance centralisée
-  import { user } from '@/store/userStore.js'; // Importer l'état de l'utilisateur
+  import api from '@/api.js'; 
   
+  import { useUserStore } from '@/store/userStore';
+  import { storeToRefs } from 'pinia';
+
+  const userStore = useUserStore();
+  const { user } = storeToRefs(userStore);
+
   const router = useRouter();
   const toast = useToast();
   const loading = ref(false);
-  
-  // Utiliser une computed property pour savoir si l'utilisateur est connecté
+
   const isLoggedIn = computed(() => !!user.value);
   const isProUser = computed(() => user.value?.subscription_status === 'active');
-  
+    
   const subscribe = async (plan) => {
     if (!isLoggedIn.value) {
       // Si l'utilisateur n'est pas connecté, on le renvoie vers la connexion

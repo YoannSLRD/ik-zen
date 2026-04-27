@@ -178,10 +178,15 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import api from '@/api'; // <-- On utilise notre instance centralisée
+import api from '@/api'; 
 import { useToast } from 'vue-toastification';
-import { user, fetchUserProfile } from '@/store/userStore'; // <-- On importe l'utilisateur depuis le store
 import MonthlyChart from '@/components/MonthlyChart.vue'; 
+
+import { useUserStore } from '@/store/userStore';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
 const toast = useToast();
 const loading = ref(false);
@@ -290,7 +295,7 @@ onMounted(async () => {
     router.replace({ query: {} }); 
     // Le store mettra à jour le statut de l'utilisateur automatiquement via le webhook,
     // donc pas besoin de fetch manuel ici, c'est plus robuste.
-    await fetchUserProfile(user.value.id); // On force la récupération du nouveau statut !
+    await userStore.fetchUserProfile(user.value.id);
   }
 });
 
