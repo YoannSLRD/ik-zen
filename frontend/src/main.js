@@ -4,6 +4,9 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+import { registerSW } from 'virtual:pwa-register'
+registerSW({ immediate: true })
+
 // Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap'
