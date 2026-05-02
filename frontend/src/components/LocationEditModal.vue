@@ -67,14 +67,17 @@
   };
   
   const show = () => {
-    // Met à jour la copie locale avec les nouvelles props à chaque ouverture
+    // Met à jour la copie locale
     editableLocation.value = { ...props.location };
+    
     // Pré-remplit le select avec l'adresse actuelle
     if (tomSelectInstance) {
-      tomSelectInstance.clear();
-      tomSelectInstance.addOption({ value: editableLocation.value.address, text: editableLocation.value.address });
-      tomSelectInstance.setValue(editableLocation.value.address);
+      tomSelectInstance.clear(true);
+      // CORRECTION ICI : On utilise la clé 'formatted' que TomSelect attend
+      tomSelectInstance.addOption({ formatted: editableLocation.value.address });
+      tomSelectInstance.setValue(editableLocation.value.address, true);
     }
+    
     modalInstance?.show();
   };
   
