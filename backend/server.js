@@ -11,7 +11,7 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { createClient } = require('@supabase/supabase-js');
 
-const prisma = require('./prisma'); // <-- AJOUT DE PRISMA
+const prisma = require('./prismaClient'); // <-- AJOUT DE PRISMA
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Initialisation du client Supabase avec la clé de service pour les actions backend

@@ -78,6 +78,38 @@ const router = createRouter({
   routes
 });
 
+// --- GESTION DU SEO (Titre & Description) ---
+router.afterEach((to) => {
+  // On cache le loader global
+  isLoading.value = false;
+
+  // On définit les balises SEO en fonction de la page (ou des valeurs par défaut)
+  const defaultTitle = 'IK Zen - Vos indemnités kilométriques, en toute sérénité';
+  const defaultDesc = 'Calculez vos frais kilométriques facilement. Application idéale pour professionnels de santé (IDEL, kinés, ergothérapeutes), commerciaux et indépendants. Export PDF/CSV.';
+  
+  // Titres spécifiques par page
+  const seoData = {
+    'Home': {
+      title: 'IK Zen - Logiciel de calcul des indemnités kilométriques (Barème URSSAF)',
+    },
+    'Pricing': {
+      title: 'Tarifs - IK Zen',
+    },
+    'FAQ': {
+      title: 'Foire Aux Questions - IK Zen',
+    }
+  };
+
+  const pageData = seoData[to.name] || {};
+  document.title = pageData.title || defaultTitle;
+
+  // On cherche la balise meta description et on la met à jour
+  let metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription) {
+    metaDescription.setAttribute('content', pageData.description || defaultDesc);
+  }
+});
+
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
 
@@ -107,10 +139,6 @@ router.beforeEach(async (to, from, next) => {
     }
     return next();
   }
-});
-
-router.afterEach(() => {
-  isLoading.value = false;
 });
 
 export default router;

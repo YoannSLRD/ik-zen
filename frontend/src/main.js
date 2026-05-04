@@ -7,16 +7,13 @@ import router from './router'
 import { registerSW } from 'virtual:pwa-register'
 registerSW({ immediate: true })
 
-// Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap'
 import './style.css'
 
-// Toast Notifications
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
-// Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { 
