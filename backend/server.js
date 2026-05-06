@@ -139,9 +139,7 @@ const isAdmin = async (req, res, next) => {
 // --- Routes d'Authentification (entièrement refactorées pour Supabase) ---
 app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
     try {
-      // On récupère l'ID, l'email, la date de création depuis la table 'users' de Supabase
-      // et le statut de l'abonnement et le nom/prénom depuis notre table 'profiles'
-      const { rows } = await db.query(`
+      const rows = await prisma.$queryRaw`
         SELECT 
           u.id, 
           u.email, 
@@ -153,7 +151,7 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
         FROM auth.users u
         LEFT JOIN public.profiles p ON u.id = p.id
         ORDER BY u.created_at DESC
-      `);
+      `;
       res.json(rows);
     } catch (error) {
       console.error("Erreur lors de la récupération des utilisateurs pour l'admin:", error);
@@ -161,34 +159,23 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
     }
 });
 
-// --- NOUVELLE ROUTE ADMIN STATS ---
+// --- ROUTE ADMIN STATS ---
 app.get('/api/admin/stats', authenticateToken, isAdmin, async (req, res) => {
     try {
-      const client = await db.getClient();
-      try {
-        // On exécute les deux requêtes en parallèle pour plus d'efficacité
-        const [totalUsersRes, proUsersRes] = await Promise.all([
-          client.query('SELECT COUNT(id) FROM auth.users'),
-          client.query("SELECT COUNT(id) FROM public.profiles WHERE subscription_status = 'active'")
-        ]);
+        const totalUsers = await prisma.profiles.count();
+        const proUsers = await prisma.profiles.count({
+            where: { subscription_status: 'active' }
+        });
   
-        const totalUsers = parseInt(totalUsersRes.rows[0].count, 10);
-        const proUsers = parseInt(proUsersRes.rows[0].count, 10);
-  
-        // On calcule le taux de conversion, en évitant la division par zéro
         const conversionRate = totalUsers > 0 ? (proUsers / totalUsers) * 100 : 0;
   
         res.json({
           totalUsers,
           proUsers,
-          conversionRate: parseFloat(conversionRate.toFixed(1)) // On arrondit à une décimale
+          conversionRate: parseFloat(conversionRate.toFixed(1))
         });
-  
-      } finally {
-        client.release();
-      }
     } catch (error) {
-      console.error("Erreur lors de la récupération des statistiques admin:", error);
+      console.error("Erreur stats admin:", error);
       res.status(500).json({ error: 'Erreur serveur.' });
     }
 });
@@ -228,11 +215,10 @@ app.post('/api/admin/impersonate/:userId', authenticateToken, isAdmin, async (re
     }
 });
 
-// --- NOUVELLE ROUTE ADMIN POUR LE GRAPHIQUE DE CROISSANCE ---
+// --- ROUTE ADMIN POUR LE GRAPHIQUE DE CROISSANCE ---
 app.get('/api/admin/stats/growth', authenticateToken, isAdmin, async (req, res) => {
     try {
-      const { rows } = await db.query(`
-        -- On génère une série de dates pour les 30 derniers jours
+      const rows = await prisma.$queryRaw`
         WITH days AS (
           SELECT generate_series(
             (NOW() - INTERVAL '29 days')::date,
@@ -240,7 +226,6 @@ app.get('/api/admin/stats/growth', authenticateToken, isAdmin, async (req, res) 
             '1 day'::interval
           )::date AS day
         )
-        -- On compte les utilisateurs pour chaque jour
         SELECT
           d.day,
           COUNT(u.id) AS new_users
@@ -248,16 +233,14 @@ app.get('/api/admin/stats/growth', authenticateToken, isAdmin, async (req, res) 
         LEFT JOIN auth.users u ON d.day = u.created_at::date
         GROUP BY d.day
         ORDER BY d.day ASC;
-      `);
+      `;
   
-      // On formate les données pour Chart.js
       const labels = rows.map(row => new Date(row.day).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
       const data = rows.map(row => parseInt(row.new_users, 10));
   
       res.json({ labels, data });
-  
     } catch (error) {
-      console.error("Erreur lors de la récupération des données de croissance:", error);
+      console.error("Erreur de croissance admin:", error);
       res.status(500).json({ error: 'Erreur serveur.' });
     }
 });

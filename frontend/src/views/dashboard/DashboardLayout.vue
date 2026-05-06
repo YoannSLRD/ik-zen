@@ -223,7 +223,8 @@ const onProfileCompleted = (updatedProfile) => {
 };
 
 const closeOffcanvas = () => {
-  if (window.innerWidth < 768 && sidebarOffcanvas) {
+  // On s'assure que sidebarOffcanvas ET l'élément HTML qu'il contrôle existent encore
+  if (window.innerWidth < 768 && sidebarOffcanvas && sidebarOffcanvas._element) {
     sidebarOffcanvas.hide();
   }
 };
