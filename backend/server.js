@@ -32,8 +32,9 @@ const upload = multer({
 const whitelist = [
     'http://localhost:5173', 
     'https://ik-zen.vercel.app',
-    'http://localhost', // <-- AJOUT POUR ANDROID
-    'capacitor://localhost', // <-- AJOUT POUR iOS
+    'http://localhost', // Android standard
+    'https://localhost', // <-- AJOUT POUR ANDROID MODERNE (CELUI QUI BLOQUAIT)
+    'capacitor://localhost', // iOS
     /^https:\/\/ik-zen-.*-yoannslrds-projects\.vercel\.app$/ 
 ];
   
