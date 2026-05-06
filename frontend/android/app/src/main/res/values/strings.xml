@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">IK Zen</string>
+    <string name="title_activity_main">IK Zen</string>
+    <string name="package_name">com.ikzen.app</string>
+    <string name="custom_url_scheme">com.ikzen.app</string>
+</resources>

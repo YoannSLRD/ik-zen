@@ -30,9 +30,10 @@ const upload = multer({
 
 // --- Middlewares ---
 const whitelist = [
-    'http://localhost:5173', // Ton frontend local
-    'https://ik-zen.vercel.app', // Ton frontend de production
-    // Vercel génère des URL de preview dynamiques, on peut les autoriser avec une expression régulière
+    'http://localhost:5173', 
+    'https://ik-zen.vercel.app',
+    'http://localhost', // <-- AJOUT POUR ANDROID
+    'capacitor://localhost', // <-- AJOUT POUR iOS
     /^https:\/\/ik-zen-.*-yoannslrds-projects\.vercel\.app$/ 
 ];
   
